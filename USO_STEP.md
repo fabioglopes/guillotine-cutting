@@ -19,22 +19,31 @@ ruby cut_optimizer.rb -f "meu_projeto.step" --output "config.yml"
 
 ### 2. Editar o YAML Gerado
 
-O arquivo YAML gerado terá esta estrutura:
+O arquivo YAML gerado terá esta estrutura **bilíngue** (português/inglês):
 
 ```yaml
-chapas_disponiveis:
-  - identificacao: "Chapa MDF 15mm"
-    largura: 2750  # ajuste conforme necessário
-    altura: 1850
-    quantidade: 3
+# Auto-generated from STEP file / Gerado automaticamente
+available_sheets:  # chapas_disponiveis
+  - label: "MDF 10.0mm Sheet"  # identificacao
+    width: 2750  # largura
+    height: 1850  # altura
+    thickness: 10.0  # espessura
+    quantity: 3  # quantidade
 
-pecas_necessarias:
-  - identificacao: "Part 1"
-    largura: 700
-    altura: 302
-    quantidade: 1  # ajuste conforme necessário
+required_pieces:  # pecas_necessarias
+  # Thickness / Espessura: 10.0mm
+  - label: "Part 1"  # identificacao
+    width: 700  # largura
+    height: 302  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade
   # ... mais peças ...
 ```
+
+**✨ Recursos:**
+- **Bilíngue**: Campos em inglês e português nos comentários
+- **Agrupamento por espessura**: Peças organizadas por espessura
+- **Chapas por espessura**: Uma entrada de chapa para cada espessura detectada
 
 **Edite:**
 - Dimensões e quantidade das chapas disponíveis
@@ -69,9 +78,19 @@ ruby cut_optimizer.rb -f "meu_projeto.yml"
 ## ✅ O Que o Parser Detecta
 
 - **Extração automática de dimensões**: Calcula bounding box de cada peça
+- **Espessura detectada**: Identifica a espessura de cada peça (menor dimensão)
+- **Agrupamento por espessura**: Organiza peças por espessura automaticamente
 - **Múltiplas peças**: Lê todas as peças do arquivo
 - **Conversão de unidades**: Converte de metros para milímetros
-- **Dimensões 2D**: Usa as duas maiores dimensões (ignora espessura)
+- **Dimensões 2D**: Usa as duas maiores dimensões para otimização
+
+### 🎯 Agrupamento Automático
+
+Se você tiver peças com espessuras diferentes (ex: 10mm, 15mm, 18mm), o conversor:
+1. Detecta todas as espessuras
+2. Cria uma entrada de chapa para cada espessura
+3. Agrupa as peças por espessura no YAML
+4. Mostra um resumo das espessuras encontradas
 
 ## 💡 Dicas
 

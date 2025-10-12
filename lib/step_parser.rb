@@ -162,6 +162,7 @@ class StepParser
       # Use the two larger dimensions
       width = dims[0]
       height = dims[1]
+      thickness = dims[2]  # Smallest dimension is the thickness
       
       # Create piece with default quantity of 1
       piece_id = "P#{idx + 1}"
@@ -171,6 +172,7 @@ class StepParser
         id: piece_id,
         width: width.round,
         height: height.round,
+        thickness: thickness.round(1),
         quantity: 1,
         label: label,
         source: 'STEP'
@@ -178,6 +180,19 @@ class StepParser
     end
     
     pieces
+  end
+  
+  # Group parts by thickness
+  def group_by_thickness
+    thickness_groups = {}
+    
+    to_pieces.each do |piece|
+      thickness = piece[:thickness]
+      thickness_groups[thickness] ||= []
+      thickness_groups[thickness] << piece
+    end
+    
+    thickness_groups
   end
 
   # Generate a summary report

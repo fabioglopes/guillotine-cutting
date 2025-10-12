@@ -1,17 +1,36 @@
-# 🪚 Otimizador de Cortes de Chapas de Madeira
+# 🪚 Otimizadores de Corte para Madeira e Metais
 
-Um software em Ruby para otimizar o corte de chapas de madeira, ideal para marcenaria e projetos de móveis planejados.
+Software completo em Ruby para otimizar cortes de materiais, ideal para marcenaria, serralheria e construção.
+
+## 📦 Dois Otimizadores Incluídos
+
+### 1️⃣ **Otimizador 2D** - Chapas e Placas
+Para materiais com 2 dimensões (largura × altura):
+- Chapas de MDF, compensado, OSB
+- Placas metálicas
+- Vidros e acrílico
+
+### 2️⃣ **Otimizador 1D (Linear)** - Tubos e Barras 🆕
+Para materiais com 1 dimensão (comprimento):
+- Tubos quadrados/redondos
+- Barras de aço/alumínio
+- Sarrafos e ripas de madeira
+- Perfis metálicos
+
+📚 **[Guia Completo de Cortes Lineares](LINEAR_CUTS.md)**
 
 ## 📋 Características
 
 - ✅ **Importação direta de arquivos CAD (STEP)** 🆕 🎯
+- ✅ **Agrupamento automático por espessura** 🆕 📊
+- ✅ **Suporte bilíngue (português/inglês)** 🆕 🌍
 - ✅ Otimização automática de cortes usando algoritmo Guillotine Bin Packing
 - ✅ Suporte para rotação de peças (opcional)
 - ✅ Consideração da espessura do corte da serra
-- ✅ **Relatórios visuais em SVG gerados automaticamente** 🆕
-- ✅ **Página HTML interativa com todos os layouts** 🆕
-- ✅ **Versão profissional para impressão** (A4, pronta para oficina) 🆕
-- ✅ **Abre navegador automaticamente** com os resultados 🆕
+- ✅ **Relatórios visuais em SVG gerados automaticamente**
+- ✅ **Página HTML interativa com todos os layouts**
+- ✅ **Versão profissional para impressão** (A4, pronta para oficina)
+- ✅ **Abre navegador automaticamente** com os resultados
 - ✅ Relatórios detalhados em texto, JSON e SVG
 - ✅ Modo interativo e por arquivo de configuração
 - ✅ Cálculo de eficiência de aproveitamento das chapas
@@ -47,9 +66,16 @@ ruby cut_optimizer.rb -f "meu_projeto.step" --output "config.yml"
 ruby cut_optimizer.rb -f "config.yml"
 ```
 
-O arquivo STEP é convertido para YAML com todas as peças detectadas. Você só precisa editar as quantidades e dimensões das chapas.
+O arquivo STEP é convertido para YAML **bilíngue** com:
+- ✅ Todas as peças detectadas
+- ✅ Espessuras identificadas
+- ✅ Agrupamento automático por espessura
+- ✅ Campos em português e inglês
 
-📚 **[Guia Uso STEP](USO_STEP.md)** - Como usar arquivos CAD
+Você só precisa editar as quantidades e dimensões das chapas!
+
+📚 **[Guia Uso STEP](USO_STEP.md)** - Como usar arquivos CAD  
+🌍 **[Suporte Bilíngue](BILINGUAL_SUPPORT.md)** - Português e Inglês
 
 ### Modo 2: Arquivo de Configuração YAML
 

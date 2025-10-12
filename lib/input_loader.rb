@@ -35,8 +35,16 @@ class InputLoader
     begin
       data = YAML.load_file(file_path)
       
-      sheets = parse_sheets(data['chapas_disponiveis'] || data['available_sheets'])
-      pieces = parse_pieces(data['pecas_necessarias'] || data['required_pieces'])
+      # Support both Portuguese and English field names
+      sheets = parse_sheets(
+        data['chapas_disponiveis'] || 
+        data['available_sheets']
+      )
+      
+      pieces = parse_pieces(
+        data['pecas_necessarias'] || 
+        data['required_pieces']
+      )
       
       if sheets.empty?
         @errors << "No sheets defined in YAML file"
@@ -60,10 +68,17 @@ class InputLoader
 
     sheets = []
     sheets_data.each_with_index do |data, idx|
+      # Support both Portuguese and English field names
       width = data['largura'] || data['width']
       height = data['altura'] || data['height']
+      thickness = data['espessura'] || data['thickness']
       quantity = data['quantidade'] || data['quantity'] || 1
       label = data['identificacao'] || data['label']
+      
+      # Add thickness to label if provided
+      if thickness && label && !label.include?(thickness.to_s)
+        label = "#{label} #{thickness}mm"
+      end
 
       quantity.times do |i|
         sheet_id = "S#{idx + 1}.#{i + 1}"
@@ -78,10 +93,17 @@ class InputLoader
     return [] unless pieces_data
 
     pieces_data.map.with_index do |data, idx|
+      # Support both Portuguese and English field names
       width = data['largura'] || data['width']
       height = data['altura'] || data['height']
+      thickness = data['espessura'] || data['thickness']
       quantity = data['quantidade'] || data['quantity'] || 1
       label = data['identificacao'] || data['label'] || "Peça #{idx + 1}"
+      
+      # Add thickness to label if provided
+      if thickness && !label.include?(thickness.to_s)
+        label = "#{label} (#{thickness}mm)"
+      end
 
       Piece.new("P#{idx + 1}", width, height, quantity, label)
     end

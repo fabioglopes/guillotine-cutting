@@ -1,40 +1,48 @@
-# Gerado automaticamente do arquivo STEP
-# Edite as quantidades e adicione as chapas disponíveis
+# Auto-generated from STEP file / Gerado automaticamente do arquivo STEP
+# Edit quantities and sheet dimensions / Edite as quantidades e dimensões das chapas
 
-chapas_disponiveis:
-  - identificacao: "Chapa MDF 15mm"
-    largura: 2750  # ajuste conforme necessário
-    altura: 1850
-    quantidade: 3
+available_sheets:  # chapas_disponiveis
+  - label: "MDF 10.0mm Sheet"  # identificacao
+    width: 2750  # largura - adjust as needed / ajuste conforme necessário
+    height: 1850  # altura
+    thickness: 10.0  # espessura
+    quantity: 3  # quantidade
 
-pecas_necessarias:
-  - identificacao: "Part 1"
-    largura: 700
-    altura: 302
-    quantidade: 1  # ajuste conforme necessário
+required_pieces:  # pecas_necessarias
+  # Thickness / Espessura: 10.0mm
+  - label: "Part 1"  # identificacao
+    width: 700  # largura
+    height: 302  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário
 
-  - identificacao: "Part 2"
-    largura: 700
-    altura: 260
-    quantidade: 1  # ajuste conforme necessário
+  - label: "Part 2"  # identificacao
+    width: 700  # largura
+    height: 260  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário
 
-  - identificacao: "Part 3"
-    largura: 302
-    altura: 240
-    quantidade: 1  # ajuste conforme necessário
+  - label: "Part 3"  # identificacao
+    width: 302  # largura
+    height: 240  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário
 
-  - identificacao: "Part 4"
-    largura: 700
-    altura: 302
-    quantidade: 1  # ajuste conforme necessário
+  - label: "Part 4"  # identificacao
+    width: 700  # largura
+    height: 302  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário
 
-  - identificacao: "Part 5"
-    largura: 302
-    altura: 240
-    quantidade: 1  # ajuste conforme necessário
+  - label: "Part 5"  # identificacao
+    width: 302  # largura
+    height: 240  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário
 
-  - identificacao: "Part 6"
-    largura: 272
-    altura: 240
-    quantidade: 1  # ajuste conforme necessário
+  - label: "Part 6"  # identificacao
+    width: 272  # largura
+    height: 240  # altura
+    thickness: 10.0  # espessura
+    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário
 

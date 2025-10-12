@@ -136,21 +136,11 @@ class CutOptimizerCLI
       exit 1
     end
 
-    # Convert to pieces
-    pieces_data = parser.to_pieces
-    pieces = []
-    pieces_data.each do |part_data|
-      pieces << Piece.new(
-        part_data[:id],
-        part_data[:width],
-        part_data[:height],
-        part_data[:quantity],
-        part_data[:label]
-      )
-    end
+    # Group pieces by thickness
+    pieces_by_thickness = parser.group_by_thickness
 
     # Generate YAML content
-    yaml_content = generate_yaml_from_step(pieces)
+    yaml_content = generate_yaml_from_step(pieces_by_thickness)
 
     # Write to file
     begin
@@ -160,12 +150,23 @@ class CutOptimizerCLI
       puts "📄 Arquivo YAML criado: #{output_file}"
       puts ""
       puts parser.summary
+      
+      # Show thickness grouping
+      if pieces_by_thickness.keys.length > 1
+        puts ""
+        puts "📊 Peças agrupadas por espessura:"
+        pieces_by_thickness.keys.sort.each do |thickness|
+          count = pieces_by_thickness[thickness].length
+          puts "  • #{thickness}mm: #{count} peça(s)"
+        end
+      end
+      
       puts ""
       puts "📋 Próximos passos:"
       puts "  1. Edite #{output_file} para ajustar:"
-      puts "     - Quantidades das peças (padrão: 1)"
-      puts "     - Dimensões das chapas disponíveis"
-      puts "     - Quantidade de chapas"
+      puts "     - Quantidades das peças (quantity/quantidade)"
+      puts "     - Dimensões das chapas (width/height - largura/altura)"
+      puts "     - Quantidade de chapas (quantity/quantidade)"
       puts ""
       puts "  2. Execute a otimização:"
       puts "     ruby cut_optimizer.rb -f #{output_file}"
@@ -175,22 +176,35 @@ class CutOptimizerCLI
     end
   end
 
-  def generate_yaml_from_step(pieces)
-    yaml = "# Gerado automaticamente do arquivo STEP\n"
-    yaml += "# Edite as quantidades e adicione as chapas disponíveis\n\n"
-    yaml += "chapas_disponiveis:\n"
-    yaml += "  - identificacao: \"Chapa MDF 15mm\"\n"
-    yaml += "    largura: 2750  # ajuste conforme necessário\n"
-    yaml += "    altura: 1850\n"
-    yaml += "    quantidade: 3\n\n"
-    yaml += "pecas_necessarias:\n"
+  def generate_yaml_from_step(pieces_by_thickness)
+    yaml = "# Auto-generated from STEP file / Gerado automaticamente do arquivo STEP\n"
+    yaml += "# Edit quantities and sheet dimensions / Edite as quantidades e dimensões das chapas\n\n"
+    yaml += "available_sheets:  # chapas_disponiveis\n"
     
-    pieces.each do |piece|
-      yaml += "  - identificacao: \"#{piece.label}\"\n"
-      yaml += "    largura: #{piece.width}\n"
-      yaml += "    altura: #{piece.height}\n"
-      yaml += "    quantidade: 1  # ajuste conforme necessário\n"
+    # Generate one sheet entry per thickness detected
+    pieces_by_thickness.keys.sort.each_with_index do |thickness, idx|
+      yaml += "  - label: \"MDF #{thickness}mm Sheet\"  # identificacao\n"
+      yaml += "    width: 2750  # largura - adjust as needed / ajuste conforme necessário\n"
+      yaml += "    height: 1850  # altura\n"
+      yaml += "    thickness: #{thickness}  # espessura\n"
+      yaml += "    quantity: 3  # quantidade\n"
       yaml += "\n"
+    end
+    
+    yaml += "required_pieces:  # pecas_necessarias\n"
+    
+    # Group pieces by thickness for better organization
+    pieces_by_thickness.keys.sort.each do |thickness|
+      yaml += "  # Thickness / Espessura: #{thickness}mm\n"
+      
+      pieces_by_thickness[thickness].each do |piece|
+        yaml += "  - label: \"#{piece[:label]}\"  # identificacao\n"
+        yaml += "    width: #{piece[:width]}  # largura\n"
+        yaml += "    height: #{piece[:height]}  # altura\n"
+        yaml += "    thickness: #{piece[:thickness]}  # espessura\n"
+        yaml += "    quantity: 1  # quantidade - adjust as needed / ajuste conforme necessário\n"
+        yaml += "\n"
+      end
     end
     
     yaml

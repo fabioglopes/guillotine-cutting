@@ -1,0 +1,23 @@
+# Simple example in English
+# Run: ruby cut_optimizer.rb -f example_simple.yml
+
+available_sheets:
+  - label: "MDF 15mm Test Sheet"
+    width: 2000
+    height: 1000
+    thickness: 15
+    quantity: 1
+
+required_pieces:
+  - label: "Piece A"
+    width: 500
+    height: 300
+    thickness: 15
+    quantity: 2
+  
+  - label: "Piece B"
+    width: 400
+    height: 250
+    thickness: 15
+    quantity: 3
+

@@ -1,0 +1,26 @@
+# Exemplo de cortes lineares - Sarrafos de madeira
+# Example of linear cuts - Wooden battens
+# Run: ruby linear_cut_optimizer.rb -f exemplo_sarrafos.yml
+
+barras_disponiveis:
+  - identificacao: "Sarrafo 3x5cm"
+    comprimento: 3000
+    quantidade: 10
+
+pecas_necessarias:
+  - identificacao: "Caibro 1"
+    comprimento: 2400
+    quantidade: 3
+  
+  - identificacao: "Ripa longa"
+    comprimento: 1800
+    quantidade: 5
+  
+  - identificacao: "Ripa média"
+    comprimento: 1200
+    quantidade: 8
+  
+  - identificacao: "Ripa curta"
+    comprimento: 600
+    quantidade: 10
+

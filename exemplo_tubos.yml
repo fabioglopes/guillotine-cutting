@@ -1,0 +1,28 @@
+# Exemplo de cortes lineares - Tubos quadrados
+# Example of linear cuts - Square tubes
+# Run: ruby linear_cut_optimizer.rb -f exemplo_tubos.yml
+
+# Barras disponíveis / Available bars
+barras_disponiveis:  # available_bars
+  - identificacao: "Tubo quadrado 30x30mm"  # label
+    comprimento: 6000  # length (mm)
+    quantidade: 5  # quantity
+
+# Peças necessárias / Required pieces
+pecas_necessarias:  # required_pieces
+  - identificacao: "Montante vertical"  # label
+    comprimento: 2100  # length (mm)
+    quantidade: 4  # quantity
+  
+  - identificacao: "Travessa horizontal"  # label
+    comprimento: 1500  # length (mm)
+    quantidade: 6  # quantity
+  
+  - identificacao: "Diagonal"  # label
+    comprimento: 800  # length (mm)
+    quantidade: 8  # quantity
+  
+  - identificacao: "Reforço pequeno"  # label
+    comprimento: 450  # length (mm)
+    quantidade: 12  # quantity
+
