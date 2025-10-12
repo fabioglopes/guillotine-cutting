@@ -14,7 +14,8 @@ class CutOptimizerCLI
       allow_rotation: true,
       cutting_width: 3,
       export_json: false,
-      export_svg: false,
+      export_svg: true,  # Gerar SVG por padrão
+      auto_open: true,   # Abrir navegador automaticamente
       interactive: false
     }
   end
@@ -63,8 +64,12 @@ class CutOptimizerCLI
         @options[:export_json] = true
       end
 
-      opts.on("-s", "--svg", "Exportar layouts em SVG") do
-        @options[:export_svg] = true
+      opts.on("-s", "--[no-]svg", "Exportar layouts em SVG (padrão: sim)") do |s|
+        @options[:export_svg] = s
+      end
+
+      opts.on("-o", "--[no-]open", "Abrir navegador automaticamente (padrão: sim)") do |o|
+        @options[:auto_open] = o
       end
 
       opts.on("-h", "--help", "Mostrar esta mensagem") do
@@ -213,7 +218,7 @@ class CutOptimizerCLI
     end
 
     if @options[:export_svg]
-      report_generator.generate_svg_report
+      report_generator.generate_svg_report(@options[:auto_open])
     end
 
     puts "\n✓ Otimização concluída!"

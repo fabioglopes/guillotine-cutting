@@ -7,10 +7,14 @@ Um software em Ruby para otimizar o corte de chapas de madeira, ideal para marce
 - ✅ Otimização automática de cortes usando algoritmo Guillotine Bin Packing
 - ✅ Suporte para rotação de peças (opcional)
 - ✅ Consideração da espessura do corte da serra
+- ✅ **Relatórios visuais em SVG gerados automaticamente** 🆕
+- ✅ **Página HTML interativa com todos os layouts** 🆕
+- ✅ **Abre navegador automaticamente** com os resultados 🆕
 - ✅ Relatórios detalhados em texto, JSON e SVG
 - ✅ Modo interativo e por arquivo de configuração
 - ✅ Cálculo de eficiência de aproveitamento das chapas
 - ✅ Identificação de peças que não puderam ser alocadas
+- ✅ Layouts profissionais prontos para impressão
 
 ## 🚀 Como Usar
 
@@ -50,6 +54,14 @@ pecas_necessarias:
 ruby cut_optimizer.rb -f exemplo.yml
 ```
 
+**O navegador abrirá automaticamente** com os layouts! 🌐
+
+O software gera automaticamente:
+- 📊 Relatório detalhado no console
+- 🎨 SVGs de cada chapa em `output/`
+- 🌐 Página HTML interativa em `output/index.html`
+- 🚀 **Abre o navegador automaticamente** com os resultados
+
 ### Modo 2: Interativo
 
 ```bash
@@ -70,12 +82,19 @@ ruby cut_optimizer.rb -f exemplo.yml -c 4
 # Exportar relatório em JSON
 ruby cut_optimizer.rb -f exemplo.yml -j
 
-# Exportar layouts visuais em SVG
-ruby cut_optimizer.rb -f exemplo.yml -s
+# Desabilitar geração de SVG (ativado por padrão)
+ruby cut_optimizer.rb -f exemplo.yml --no-svg
+
+# Desabilitar abertura automática do navegador
+ruby cut_optimizer.rb -f exemplo.yml --no-open
 
 # Combinar opções
-ruby cut_optimizer.rb -f exemplo.yml -j -s -c 3
+ruby cut_optimizer.rb -f exemplo.yml -j -c 3 --no-rotation
 ```
+
+**Notas:** 
+- SVGs são gerados automaticamente em `output/` (use `--no-svg` para desabilitar)
+- O navegador abre automaticamente (use `--no-open` para desabilitar)
 
 ### Ver todas as opções
 
@@ -83,31 +102,44 @@ ruby cut_optimizer.rb -f exemplo.yml -j -s -c 3
 ruby cut_optimizer.rb --help
 ```
 
-## 📊 Entendendo o Relatório
+## 📊 Entendendo os Relatórios
 
-O programa gera um relatório detalhado contendo:
+O programa gera múltiplos tipos de relatórios:
 
-1. **Resumo Geral**
+### 1. **Relatório no Console**
    - Total de peças necessárias
    - Peças cortadas com sucesso
    - Chapas utilizadas
    - Eficiência geral de aproveitamento
-
-2. **Detalhes por Chapa**
-   - Dimensões da chapa
-   - Lista de peças cortadas
-   - Posição de cada peça (coordenadas X, Y)
-   - Indicação de peças rotacionadas
+   - Detalhes por chapa com posições
    - Layout ASCII simplificado
+   - Peças não alocadas (se houver)
 
-3. **Peças Não Alocadas**
-   - Lista de peças que não couberam nas chapas disponíveis
-   - Sugestões de ação
+### 2. **Página HTML Interativa** (`output/index.html`)
+   - Visualização completa de todos os layouts
+   - Cards interativos para cada chapa
+   - Resumo com estatísticas gerais
+   - Grid responsivo que se adapta à tela
+   - Botões para download dos SVGs
+   - Pronto para impressão
+
+### 3. **SVGs Individuais** (`output/sheet_N.svg`)
+   - Layout visual de cada chapa
+   - Peças coloridas com labels
+   - Legenda lateral com todas as informações
+   - Cotas dimensionais
+   - Indicadores de rotação (↻)
+   - Coordenadas exatas de cada peça
+   - Estatísticas de aproveitamento
+
+### 4. **JSON** (opcional com `-j`)
+   - Dados estruturados para integração
+   - Todas as informações programaticamente acessíveis
 
 ## 🎯 Exemplo de Uso
 
 ```bash
-ruby cut_optimizer.rb -f exemplo.yml -s
+ruby cut_optimizer.rb -f exemplo.yml
 ```
 
 Saída:
@@ -126,10 +158,16 @@ Chapas utilizadas: 3
 Peças cortadas: 22
 Peças não colocadas: 0
 
-✓ Layout SVG salvo em: output/sheet_1.svg
-✓ Layout SVG salvo em: output/sheet_2.svg
-✓ Layout SVG salvo em: output/sheet_3.svg
+--- GERANDO LAYOUTS SVG ---
+  ✓ Chapa MDF 15mm #1: output/sheet_1.svg
+  ✓ Chapa MDF 15mm #2: output/sheet_2.svg
+  ✓ Chapa Compensado #1: output/sheet_3.svg
+  ✓ Índice HTML: output/index.html
+
+🌐 Abrindo navegador com os layouts...
 ```
+
+**O navegador abre automaticamente mostrando os layouts visuais!** 🎨
 
 ## 🔧 Estrutura do Projeto
 
@@ -165,7 +203,7 @@ O software utiliza o algoritmo **Guillotine Bin Packing**, especialmente adequad
 
 4. **Ordem de corte**: As peças maiores são cortadas primeiro para melhor otimização
 
-5. **Visualização**: Use a opção `-s` para gerar arquivos SVG que você pode abrir no navegador ou imprimir
+5. **Visualização**: SVGs são gerados automaticamente - abra `output/index.html` no navegador para visualizar e imprimir
 
 ## 🤝 Contribuindo
 

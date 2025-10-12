@@ -54,19 +54,21 @@ pecas_necessarias:
 ruby cut_optimizer.rb -f meu_projeto.yml
 ```
 
+**O navegador abrirá automaticamente** mostrando os layouts! 🌐
+
 ### Método 2: Modo Interativo
 
 ```bash
 ruby cut_optimizer.rb -i
 ```
 
-O programa vai te guiar passo a passo.
+O programa vai te guiar passo a passo e **abrir o navegador automaticamente** ao final.
 
 ## Opções Úteis
 
 ```bash
-# Gerar visualizações SVG (abrir no navegador)
-ruby cut_optimizer.rb -f exemplo.yml -s
+# Desabilitar abertura automática do navegador
+ruby cut_optimizer.rb -f exemplo.yml --no-open
 
 # Exportar relatório JSON
 ruby cut_optimizer.rb -f exemplo.yml -j
