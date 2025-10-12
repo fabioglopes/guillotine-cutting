@@ -1,0 +1,20 @@
+# Exemplo simples para testar o otimizador
+# Execute: ruby cut_optimizer.rb -f exemplo_simples.yml
+
+chapas_disponiveis:
+  - identificacao: "Chapa Teste"
+    largura: 2000
+    altura: 1000
+    quantidade: 1
+
+pecas_necessarias:
+  - identificacao: "Peça A"
+    largura: 500
+    altura: 300
+    quantidade: 2
+  
+  - identificacao: "Peça B"
+    largura: 400
+    altura: 250
+    quantidade: 3
+

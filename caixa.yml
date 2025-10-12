@@ -1,0 +1,29 @@
+chapas_disponiveis:
+  - identificacao: "Chapa MDF 10mm"
+    largura: 800  # em milímetros
+    altura: 890
+    quantidade: 1
+
+  - identificacao: "Chapa Compensado"
+    largura: 260
+    altura: 700
+    quantidade: 1
+  - identificacao: "Chapa Compensado"
+    largura: 1400
+    altura: 565
+    quantidade: 1  
+
+# Peças que precisam ser cortadas
+pecas_necessarias:
+  - identificacao: "Caixa lateral"
+    largura: 700
+    altura: 302
+    quantidade: 2
+  - identificacao: "Caixa fundo"
+    largura: 700
+    altura: 260
+    quantidade: 1
+  - identificacao: "Caixa lateral traseira"
+    largura: 240
+    altura: 302
+    quantidade: 2

@@ -1,0 +1,57 @@
+# Exemplo de arquivo de configuração para otimização de cortes
+# Use este arquivo como modelo para seus projetos de marcenaria
+
+# Chapas disponíveis para corte
+chapas_disponiveis:
+  - identificacao: "Chapa MDF 15mm"
+    largura: 2750  # em milímetros
+    altura: 1850
+    quantidade: 2
+
+  - identificacao: "Chapa Compensado"
+    largura: 2200
+    altura: 1600
+    quantidade: 1
+
+# Peças que precisam ser cortadas
+pecas_necessarias:
+  - identificacao: "Prateleira Grande"
+    largura: 900
+    altura: 300
+    quantidade: 4
+
+  - identificacao: "Prateleira Média"
+    largura: 600
+    altura: 300
+    quantidade: 6
+
+  - identificacao: "Lateral Armário"
+    largura: 1800
+    altura: 400
+    quantidade: 2
+
+  - identificacao: "Porta"
+    largura: 700
+    altura: 1400
+    quantidade: 2
+
+  - identificacao: "Tampa Superior"
+    largura: 950
+    altura: 450
+    quantidade: 1
+
+  - identificacao: "Fundo"
+    largura: 900
+    altura: 350
+    quantidade: 3
+
+  - identificacao: "Divisória"
+    largura: 400
+    altura: 800
+    quantidade: 4
+
+# Notas:
+# - Todas as medidas devem estar em milímetros
+# - O otimizador considera automaticamente a espessura do corte (padrão: 3mm)
+# - Peças podem ser rotacionadas automaticamente para melhor aproveitamento
+

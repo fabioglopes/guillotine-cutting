@@ -1,0 +1,96 @@
+# Exemplo real: Projeto de um armário de cozinha
+# Chapas padrão brasileiras: 2750x1850mm (MDF/MDP)
+
+chapas_disponiveis:
+  - identificacao: "MDF 15mm Branco"
+    largura: 2750
+    altura: 1850
+    quantidade: 3
+
+pecas_necessarias:
+  # Estrutura principal
+  - identificacao: "Lateral Esquerda"
+    largura: 2100
+    altura: 600
+    quantidade: 1
+
+  - identificacao: "Lateral Direita"
+    largura: 2100
+    altura: 600
+    quantidade: 1
+
+  - identificacao: "Fundo"
+    largura: 2070
+    altura: 900
+    quantidade: 1
+
+  - identificacao: "Tampa Superior"
+    largura: 932
+    altura: 600
+    quantidade: 1
+
+  - identificacao: "Base Inferior"
+    largura: 900
+    altura: 600
+    quantidade: 1
+
+  # Prateleiras
+  - identificacao: "Prateleira Fixa"
+    largura: 868
+    altura: 600
+    quantidade: 2
+
+  - identificacao: "Prateleira Regulável"
+    largura: 868
+    altura: 580
+    quantidade: 4
+
+  # Portas
+  - identificacao: "Porta Grande"
+    largura: 1400
+    altura: 450
+    quantidade: 2
+
+  - identificacao: "Porta Pequena"
+    largura: 700
+    altura: 450
+    quantidade: 2
+
+  # Gavetas
+  - identificacao: "Frente Gaveta"
+    largura: 400
+    altura: 150
+    quantidade: 3
+
+  - identificacao: "Lateral Gaveta"
+    largura: 500
+    altura: 120
+    quantidade: 6
+
+  - identificacao: "Fundo Gaveta"
+    largura: 400
+    altura: 476
+    quantidade: 3
+
+  # Divisórias internas
+  - identificacao: "Divisória Vertical"
+    largura: 2038
+    altura: 600
+    quantidade: 2
+
+  - identificacao: "Divisória Horizontal"
+    largura: 400
+    altura: 580
+    quantidade: 3
+
+  # Acabamentos
+  - identificacao: "Rodapé Frontal"
+    largura: 932
+    altura: 100
+    quantidade: 1
+
+  - identificacao: "Reforço Dobradiça"
+    largura: 150
+    altura: 600
+    quantidade: 4
+
