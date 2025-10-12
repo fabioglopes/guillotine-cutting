@@ -1,5 +1,37 @@
 # Changelog
 
+## [2.3.0] - 2025-10-12
+
+### 🖨️ Versão Profissional para Impressão
+
+#### Adicionado
+- **`output/print.html`** - Versão otimizada para impressão em papel A4
+- **Botão flutuante** no index.html para acessar rapidamente a versão de impressão
+- **Layout profissional** com quebra de página (uma chapa por página)
+- **Tabelas detalhadas** com checkboxes (☐) para marcar peças cortadas
+- **Instruções completas** para marcenaria
+- **Coordenadas precisas** (X, Y) de cada peça
+- **Indicadores visuais** de rotação (↻) destacados em vermelho
+- **Diagrama SVG** embutido em cada página
+- **Botão de impressão** grande e visível
+- **Estatísticas detalhadas** por chapa
+- **Página de peças não alocadas** (se houver) com alertas
+- **CSS @page** para controle de impressão A4
+- **Simulação de páginas** na visualização em tela
+
+#### Recursos da Versão de Impressão
+- Formato A4 (210×297mm)
+- Margens de 15mm
+- Cabeçalho com data e hora
+- Resumo do projeto na primeira página
+- Tabela completa de peças por chapa
+- Checkboxes para controle na oficina
+- Rodapé com estatísticas de área
+- Modo tela: simula páginas com fundo cinza
+- Modo impressão: remove elementos desnecessários
+
+---
+
 ## [2.2.0] - 2025-10-12
 
 ### 🎨 Melhorias no Layout Visual

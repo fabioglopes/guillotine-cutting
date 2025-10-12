@@ -134,6 +134,11 @@ class ReportGenerator
     generate_html_index(output_dir)
     puts "  ✓ Índice HTML: #{index_path}"
     
+    # Gera versão para impressão
+    print_path = File.join(output_dir, 'print.html')
+    generate_print_version(output_dir)
+    puts "  ✓ Versão para impressão: #{print_path}"
+    
     # Abre automaticamente no navegador
     if auto_open
       if open_in_browser(index_path)
@@ -144,6 +149,8 @@ class ReportGenerator
     else
       puts "\n💡 Abra #{index_path} no seu navegador para visualizar todos os layouts!"
     end
+    
+    puts "📄 Para imprimir: abra #{print_path}"
   end
 
   private
@@ -423,11 +430,39 @@ class ReportGenerator
           .print-btn:hover {
             background: #5568d3;
           }
+          .print-version-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #FF5722;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16pt;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+          }
+          .print-version-btn:hover {
+            background: #E64A19;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+          }
+          .print-version-btn::before {
+            content: '🖨️ ';
+            font-size: 18pt;
+          }
           @media print {
             body { background: white; padding: 0; }
             .container { box-shadow: none; }
             .sheet-card { page-break-inside: avoid; }
             .print-btn { display: none; }
+            .print-version-btn { display: none; }
           }
           .footer {
             margin-top: 40px;
@@ -439,6 +474,8 @@ class ReportGenerator
         </style>
       </head>
       <body>
+        <a href="print.html" class="print-version-btn" target="_blank">VERSÃO PARA IMPRESSÃO</a>
+        
         <div class="container">
           <h1>🪚 Layouts de Corte Otimizados</h1>
           <p class="subtitle">Relatório gerado pelo Otimizador de Cortes</p>
@@ -495,6 +532,478 @@ class ReportGenerator
     HTML
 
     File.write("#{output_dir}/index.html", html)
+  end
+
+  def generate_print_version(output_dir)
+    html = <<~HTML
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Plano de Corte - Impressão</title>
+        <style>
+          @page {
+            size: A4;
+            margin: 15mm;
+          }
+          
+          * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+          }
+          
+          body {
+            font-family: Arial, sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #000;
+            background: white;
+          }
+          
+          .print-header {
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+          }
+          
+          .print-header h1 {
+            font-size: 20pt;
+            font-weight: bold;
+            margin-bottom: 5px;
+          }
+          
+          .print-header .meta {
+            font-size: 9pt;
+            color: #666;
+          }
+          
+          .summary-box {
+            border: 2px solid #333;
+            padding: 10px;
+            margin-bottom: 20px;
+            background: #f9f9f9;
+          }
+          
+          .summary-box h2 {
+            font-size: 14pt;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #666;
+            padding-bottom: 3px;
+          }
+          
+          .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            font-size: 10pt;
+          }
+          
+          .stat-item {
+            padding: 5px;
+            background: white;
+            border: 1px solid #ddd;
+          }
+          
+          .stat-label {
+            font-weight: bold;
+            font-size: 9pt;
+            color: #666;
+          }
+          
+          .stat-value {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #000;
+          }
+          
+          .sheet-section {
+            page-break-before: always;
+            page-break-inside: avoid;
+          }
+          
+          .sheet-section:first-of-type {
+            page-break-before: auto;
+          }
+          
+          .sheet-header {
+            background: #333;
+            color: white;
+            padding: 8px 12px;
+            margin-bottom: 10px;
+            font-size: 14pt;
+            font-weight: bold;
+          }
+          
+          .sheet-info {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+            font-size: 10pt;
+          }
+          
+          .info-box {
+            border: 1px solid #333;
+            padding: 6px;
+            background: #f5f5f5;
+          }
+          
+          .info-label {
+            font-size: 8pt;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+          }
+          
+          .info-value {
+            font-size: 12pt;
+            font-weight: bold;
+          }
+          
+          .pieces-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            font-size: 9pt;
+          }
+          
+          .pieces-table thead {
+            background: #333;
+            color: white;
+          }
+          
+          .pieces-table th {
+            padding: 6px;
+            text-align: left;
+            font-weight: bold;
+            border: 1px solid #000;
+          }
+          
+          .pieces-table td {
+            padding: 5px 6px;
+            border: 1px solid #333;
+          }
+          
+          .pieces-table tbody tr:nth-child(even) {
+            background: #f9f9f9;
+          }
+          
+          .pieces-table tbody tr:hover {
+            background: #e0e0e0;
+          }
+          
+          .piece-number {
+            font-weight: bold;
+            text-align: center;
+            width: 40px;
+          }
+          
+          .piece-id {
+            font-family: monospace;
+            font-weight: bold;
+          }
+          
+          .piece-rotated {
+            color: #c00;
+            font-weight: bold;
+          }
+          
+          .cutting-diagram {
+            border: 2px solid #000;
+            padding: 10px;
+            background: white;
+            margin-bottom: 15px;
+          }
+          
+          .diagram-title {
+            font-size: 10pt;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-align: center;
+          }
+          
+          .svg-container {
+            text-align: center;
+          }
+          
+          .svg-container svg {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+          }
+          
+          .instructions {
+            background: #fffacd;
+            border: 2px solid #f0e68c;
+            padding: 10px;
+            margin-top: 15px;
+            font-size: 9pt;
+          }
+          
+          .instructions h3 {
+            font-size: 11pt;
+            margin-bottom: 5px;
+          }
+          
+          .instructions ul {
+            margin-left: 20px;
+          }
+          
+          .instructions li {
+            margin-bottom: 3px;
+          }
+          
+          .footer {
+            margin-top: 20px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 8pt;
+            text-align: center;
+            color: #666;
+          }
+          
+          .checkbox {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border: 2px solid #000;
+            margin-right: 5px;
+            vertical-align: middle;
+          }
+          
+          @media print {
+            body {
+              print-color-adjust: exact;
+              -webkit-print-color-adjust: exact;
+            }
+            
+            .no-print {
+              display: none;
+            }
+          }
+          
+          @media screen {
+            body {
+              padding: 20px;
+              background: #e0e0e0;
+            }
+            
+            .page {
+              max-width: 210mm;
+              margin: 0 auto 20px;
+              background: white;
+              padding: 15mm;
+              box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            }
+            
+            .print-button {
+              position: fixed;
+              top: 20px;
+              right: 20px;
+              background: #4CAF50;
+              color: white;
+              border: none;
+              padding: 12px 24px;
+              font-size: 14pt;
+              font-weight: bold;
+              border-radius: 5px;
+              cursor: pointer;
+              box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+              z-index: 1000;
+            }
+            
+            .print-button:hover {
+              background: #45a049;
+            }
+          }
+        </style>
+      </head>
+      <body>
+        <button class="print-button no-print" onclick="window.print()">🖨️ IMPRIMIR</button>
+        
+        <div class="page">
+          <div class="print-header">
+            <h1>🪚 PLANO DE CORTE DE CHAPAS</h1>
+            <div class="meta">
+              Gerado em: #{Time.now.strftime('%d/%m/%Y às %H:%M')} | 
+              Otimizador de Cortes v2.2
+            </div>
+          </div>
+          
+          <div class="summary-box">
+            <h2>📊 Resumo do Projeto</h2>
+            <div class="summary-stats">
+              <div class="stat-item">
+                <div class="stat-label">Chapas Utilizadas</div>
+                <div class="stat-value">#{@optimizer.used_sheets.length}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Peças Cortadas</div>
+                <div class="stat-value">#{@optimizer.required_pieces.length - @optimizer.unplaced_pieces.length}/#{@optimizer.required_pieces.length}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Eficiência Geral</div>
+                <div class="stat-value">#{calculate_overall_efficiency}%</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Peças Não Alocadas</div>
+                <div class="stat-value">#{@optimizer.unplaced_pieces.length}</div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="instructions">
+            <h3>📋 Instruções para Marcenaria:</h3>
+            <ul>
+              <li>Confira as medidas antes de cortar</li>
+              <li>Considere a espessura do corte (serra): 3mm</li>
+              <li>Peças marcadas com "↻" devem ser rotacionadas 90°</li>
+              <li>Marque as peças cortadas usando as caixas ☐</li>
+              <li>As coordenadas X,Y indicam o ponto inicial (canto inferior esquerdo)</li>
+            </ul>
+          </div>
+        </div>
+    HTML
+
+    @optimizer.used_sheets.each_with_index do |sheet, sheet_idx|
+      html += <<~SHEET_PAGE
+        
+        <div class="page sheet-section">
+          <div class="sheet-header">
+            CHAPA #{sheet_idx + 1}: #{sheet.label}
+          </div>
+          
+          <div class="sheet-info">
+            <div class="info-box">
+              <div class="info-label">Dimensões</div>
+              <div class="info-value">#{sheet.width} × #{sheet.height} mm</div>
+            </div>
+            <div class="info-box">
+              <div class="info-label">Aproveitamento</div>
+              <div class="info-value">#{sheet.efficiency}%</div>
+            </div>
+            <div class="info-box">
+              <div class="info-label">Peças nesta chapa</div>
+              <div class="info-value">#{sheet.placed_pieces.length}</div>
+            </div>
+          </div>
+          
+          <table class="pieces-table">
+            <thead>
+              <tr>
+                <th>☐</th>
+                <th>#</th>
+                <th>ID</th>
+                <th>Identificação</th>
+                <th>Largura</th>
+                <th>Altura</th>
+                <th>Posição (X, Y)</th>
+                <th>Obs.</th>
+              </tr>
+            </thead>
+            <tbody>
+      SHEET_PAGE
+
+      sheet.placed_pieces.each_with_index do |pp, idx|
+        piece = pp[:piece]
+        rotation_mark = pp[:rotated] ? '<span class="piece-rotated">↻ ROTACIONADA</span>' : ''
+        
+        html += <<~PIECE_ROW
+              <tr>
+                <td class="piece-number"><span class="checkbox"></span></td>
+                <td class="piece-number">#{idx + 1}</td>
+                <td class="piece-id">#{piece.id}</td>
+                <td>#{piece.label}</td>
+                <td>#{piece.width} mm</td>
+                <td>#{piece.height} mm</td>
+                <td>(#{pp[:x]}, #{pp[:y]})</td>
+                <td>#{rotation_mark}</td>
+              </tr>
+        PIECE_ROW
+      end
+
+      html += <<~SHEET_END
+            </tbody>
+          </table>
+          
+          <div class="cutting-diagram">
+            <div class="diagram-title">DIAGRAMA DE CORTE</div>
+            <div class="svg-container">
+              <object data="sheet_#{sheet_idx + 1}.svg" type="image/svg+xml" style="width: 100%; max-height: 400px;"></object>
+            </div>
+          </div>
+          
+          <div class="footer">
+            Chapa #{sheet_idx + 1} de #{@optimizer.used_sheets.length} | 
+            Área utilizada: #{sheet.used_area}mm² | 
+            Área desperdiçada: #{sheet.area - sheet.used_area}mm²
+          </div>
+        </div>
+      SHEET_END
+    end
+
+    # Página de peças não alocadas (se houver)
+    if @optimizer.unplaced_pieces.any?
+      html += <<~UNPLACED
+        
+        <div class="page">
+          <div class="sheet-header" style="background: #c00;">
+            ⚠️ PEÇAS NÃO ALOCADAS
+          </div>
+          
+          <div class="instructions" style="background: #ffcccc; border-color: #c00;">
+            <h3>Atenção: As seguintes peças não puderam ser cortadas com as chapas disponíveis:</h3>
+          </div>
+          
+          <table class="pieces-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Identificação</th>
+                <th>Largura</th>
+                <th>Altura</th>
+                <th>Área</th>
+              </tr>
+            </thead>
+            <tbody>
+      UNPLACED
+
+      @optimizer.unplaced_pieces.each do |piece|
+        html += <<~UNPLACED_ROW
+              <tr>
+                <td class="piece-id">#{piece.id}</td>
+                <td>#{piece.label}</td>
+                <td>#{piece.width} mm</td>
+                <td>#{piece.height} mm</td>
+                <td>#{piece.area} mm²</td>
+              </tr>
+        UNPLACED_ROW
+      end
+
+      html += <<~UNPLACED_END
+            </tbody>
+          </table>
+          
+          <div class="instructions" style="background: #fffacd;">
+            <h3>💡 Sugestões:</h3>
+            <ul>
+              <li>Adicione mais chapas ao projeto</li>
+              <li>Verifique se as dimensões das peças estão corretas</li>
+              <li>Considere dividir peças grandes em partes menores</li>
+            </ul>
+          </div>
+        </div>
+      UNPLACED_END
+    end
+
+    html += <<~HTML_END
+      </body>
+      </html>
+    HTML_END
+
+    File.write("#{output_dir}/print.html", html)
   end
 
   def open_in_browser(filepath)

@@ -9,6 +9,7 @@ Um software em Ruby para otimizar o corte de chapas de madeira, ideal para marce
 - ✅ Consideração da espessura do corte da serra
 - ✅ **Relatórios visuais em SVG gerados automaticamente** 🆕
 - ✅ **Página HTML interativa com todos os layouts** 🆕
+- ✅ **Versão profissional para impressão** (A4, pronta para oficina) 🆕
 - ✅ **Abre navegador automaticamente** com os resultados 🆕
 - ✅ Relatórios detalhados em texto, JSON e SVG
 - ✅ Modo interativo e por arquivo de configuração
@@ -60,6 +61,7 @@ O software gera automaticamente:
 - 📊 Relatório detalhado no console
 - 🎨 SVGs de cada chapa em `output/`
 - 🌐 Página HTML interativa em `output/index.html`
+- 🖨️ **Versão otimizada para impressão** em `output/print.html` 🆕
 - 🚀 **Abre o navegador automaticamente** com os resultados
 
 ### Modo 2: Interativo
@@ -117,10 +119,11 @@ O programa gera múltiplos tipos de relatórios:
 
 ### 2. **Página HTML Interativa** (`output/index.html`)
    - Visualização completa de todos os layouts
+   - **Botão para versão de impressão** (canto superior direito) 🆕
    - Cards interativos para cada chapa
    - Resumo com estatísticas gerais
    - Grid responsivo que se adapta à tela
-   - Botões para download dos SVGs
+   - Botões para download dos SVGs individuais
    - Pronto para impressão
 
 ### 3. **SVGs Individuais** (`output/sheet_N.svg`)
@@ -132,7 +135,15 @@ O programa gera múltiplos tipos de relatórios:
    - Coordenadas exatas de cada peça
    - Estatísticas de aproveitamento
 
-### 4. **JSON** (opcional com `-j`)
+### 4. **Versão para Impressão** (`output/print.html`)
+   - Layout otimizado para papel A4
+   - Uma chapa por página
+   - Tabelas detalhadas com checkboxes
+   - Coordenadas e medidas precisas
+   - Instruções para marcenaria
+   - Perfeito para levar à oficina
+
+### 5. **JSON** (opcional com `-j`)
    - Dados estruturados para integração
    - Todas as informações programaticamente acessíveis
 
@@ -163,8 +174,10 @@ Peças não colocadas: 0
   ✓ Chapa MDF 15mm #2: output/sheet_2.svg
   ✓ Chapa Compensado #1: output/sheet_3.svg
   ✓ Índice HTML: output/index.html
+  ✓ Versão para impressão: output/print.html
 
 🌐 Abrindo navegador com os layouts...
+📄 Para imprimir: abra output/print.html
 ```
 
 **O navegador abre automaticamente mostrando os layouts visuais!** 🎨
@@ -180,7 +193,13 @@ cut-tables/
 │   ├── cutting_optimizer.rb  # Motor de otimização
 │   ├── guillotine_bin_packer.rb  # Algoritmo de empacotamento
 │   └── report_generator.rb   # Gerador de relatórios
+├── output/                   # Arquivos gerados
+│   ├── index.html            # Visualização interativa
+│   ├── print.html            # 🖨️ Versão para impressão
+│   ├── sheet_1.svg           # SVG da chapa 1
+│   └── sheet_2.svg           # SVG da chapa 2
 ├── exemplo.yml               # Arquivo de exemplo
+├── imprimir.sh               # Script para abrir versão de impressão
 └── README.md                 # Este arquivo
 ```
 
@@ -203,7 +222,9 @@ O software utiliza o algoritmo **Guillotine Bin Packing**, especialmente adequad
 
 4. **Ordem de corte**: As peças maiores são cortadas primeiro para melhor otimização
 
-5. **Visualização**: SVGs são gerados automaticamente - abra `output/index.html` no navegador para visualizar e imprimir
+5. **Visualização**: SVGs são gerados automaticamente - abra `output/index.html` no navegador para visualizar
+
+6. **🖨️ Para imprimir**: Abra `output/print.html` - versão profissional otimizada para papel A4, com checkboxes e todas as informações necessárias para a oficina!
 
 ## 🤝 Contribuindo
 

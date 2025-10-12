@@ -40,6 +40,7 @@ A legenda mostra:
 Além dos SVGs individuais, é gerado um arquivo `index.html` que:
 
 - **Visualiza todos os layouts** em uma página
+- **Botão para versão de impressão** (laranja, canto superior direito) 🆕
 - **Grid responsivo** que se adapta ao tamanho da tela
 - **Resumo geral** com estatísticas:
   - Chapas utilizadas
