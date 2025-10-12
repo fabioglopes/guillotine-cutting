@@ -1,0 +1,40 @@
+# Gerado automaticamente do arquivo STEP
+# Edite as quantidades e adicione as chapas disponíveis
+
+chapas_disponiveis:
+  - identificacao: "Chapa MDF 15mm"
+    largura: 2750  # ajuste conforme necessário
+    altura: 1850
+    quantidade: 3
+
+pecas_necessarias:
+  - identificacao: "Part 1"
+    largura: 700
+    altura: 302
+    quantidade: 1  # ajuste conforme necessário
+
+  - identificacao: "Part 2"
+    largura: 700
+    altura: 260
+    quantidade: 1  # ajuste conforme necessário
+
+  - identificacao: "Part 3"
+    largura: 302
+    altura: 240
+    quantidade: 1  # ajuste conforme necessário
+
+  - identificacao: "Part 4"
+    largura: 700
+    altura: 302
+    quantidade: 1  # ajuste conforme necessário
+
+  - identificacao: "Part 5"
+    largura: 302
+    altura: 240
+    quantidade: 1  # ajuste conforme necessário
+
+  - identificacao: "Part 6"
+    largura: 272
+    altura: 240
+    quantidade: 1  # ajuste conforme necessário
+

@@ -4,6 +4,7 @@ require_relative 'lib/piece'
 require_relative 'lib/sheet'
 require_relative 'lib/cutting_optimizer'
 require_relative 'lib/report_generator'
+require_relative 'lib/input_loader'
 require 'yaml'
 require 'optparse'
 
@@ -16,7 +17,8 @@ class CutOptimizerCLI
       export_json: false,
       export_svg: true,  # Gerar SVG por padrão
       auto_open: true,   # Abrir navegador automaticamente
-      interactive: false
+      interactive: false,
+      convert_to_yaml: nil
     }
   end
 
@@ -26,7 +28,15 @@ class CutOptimizerCLI
     if @options[:interactive]
       run_interactive
     elsif @options[:input_file]
-      run_from_file(@options[:input_file])
+      # Check if it's a STEP file
+      if @options[:input_file] =~ /\.(step|stp)$/i
+        # STEP files must be converted to YAML first
+        output_file = @options[:convert_to_yaml] || @options[:input_file].gsub(/\.(step|stp)$/i, '.yml')
+        convert_step_to_yaml(@options[:input_file], output_file)
+      else
+        # YAML files go directly to optimization
+        run_from_file(@options[:input_file])
+      end
     else
       puts "Erro: Especifique um arquivo de entrada com -f ou use modo interativo com -i"
       puts "Use --help para mais informações"
@@ -44,7 +54,7 @@ class CutOptimizerCLI
       opts.separator ""
       opts.separator "Opções:"
 
-      opts.on("-f", "--file ARQUIVO", "Arquivo YAML com especificações das chapas e peças") do |file|
+      opts.on("-f", "--file ARQUIVO", "Arquivo YAML ou STEP com especificações") do |file|
         @options[:input_file] = file
       end
 
@@ -72,6 +82,10 @@ class CutOptimizerCLI
         @options[:auto_open] = o
       end
 
+      opts.on("--output ARQUIVO", "Nome do arquivo YAML de saída (para arquivos STEP)") do |output|
+        @options[:convert_to_yaml] = output
+      end
+
       opts.on("-h", "--help", "Mostrar esta mensagem") do
         puts opts
         exit
@@ -80,22 +94,106 @@ class CutOptimizerCLI
   end
 
   def run_from_file(filename)
-    unless File.exist?(filename)
-      puts "Erro: Arquivo '#{filename}' não encontrado!"
+    loader = InputLoader.new
+    data = loader.load_file(filename)
+
+    unless data
+      puts "Erro ao carregar arquivo:"
+      loader.errors.each { |e| puts "  - #{e}" }
       exit 1
     end
 
-    begin
-      data = YAML.load_file(filename)
-    rescue => e
-      puts "Erro ao ler arquivo YAML: #{e.message}"
+    available_sheets = data[:sheets]
+    required_pieces = data[:pieces]
+
+    if available_sheets.empty?
+      puts "\nErro: Nenhuma chapa disponível definida no arquivo YAML!"
       exit 1
     end
 
-    available_sheets = parse_sheets(data['chapas_disponiveis'] || data['available_sheets'])
-    required_pieces = parse_pieces(data['pecas_necessarias'] || data['required_pieces'])
+    if required_pieces.empty?
+      puts "Erro: Nenhuma peça necessária definida!"
+      exit 1
+    end
 
     run_optimization(available_sheets, required_pieces)
+  end
+
+  def convert_step_to_yaml(step_file, output_file)
+    require_relative 'lib/step_parser'
+    
+    # Parse STEP file directly
+    parser = StepParser.new(step_file)
+    
+    unless parser.parse
+      puts "Erro ao carregar arquivo STEP:"
+      parser.errors.each { |e| puts "  - #{e}" }
+      exit 1
+    end
+
+    if parser.parts.empty?
+      puts "Erro: Nenhuma peça encontrada no arquivo STEP"
+      exit 1
+    end
+
+    # Convert to pieces
+    pieces_data = parser.to_pieces
+    pieces = []
+    pieces_data.each do |part_data|
+      pieces << Piece.new(
+        part_data[:id],
+        part_data[:width],
+        part_data[:height],
+        part_data[:quantity],
+        part_data[:label]
+      )
+    end
+
+    # Generate YAML content
+    yaml_content = generate_yaml_from_step(pieces)
+
+    # Write to file
+    begin
+      File.write(output_file, yaml_content)
+      puts "✅ Arquivo STEP convertido com sucesso!"
+      puts ""
+      puts "📄 Arquivo YAML criado: #{output_file}"
+      puts ""
+      puts parser.summary
+      puts ""
+      puts "📋 Próximos passos:"
+      puts "  1. Edite #{output_file} para ajustar:"
+      puts "     - Quantidades das peças (padrão: 1)"
+      puts "     - Dimensões das chapas disponíveis"
+      puts "     - Quantidade de chapas"
+      puts ""
+      puts "  2. Execute a otimização:"
+      puts "     ruby cut_optimizer.rb -f #{output_file}"
+    rescue => e
+      puts "Erro ao salvar arquivo YAML: #{e.message}"
+      exit 1
+    end
+  end
+
+  def generate_yaml_from_step(pieces)
+    yaml = "# Gerado automaticamente do arquivo STEP\n"
+    yaml += "# Edite as quantidades e adicione as chapas disponíveis\n\n"
+    yaml += "chapas_disponiveis:\n"
+    yaml += "  - identificacao: \"Chapa MDF 15mm\"\n"
+    yaml += "    largura: 2750  # ajuste conforme necessário\n"
+    yaml += "    altura: 1850\n"
+    yaml += "    quantidade: 3\n\n"
+    yaml += "pecas_necessarias:\n"
+    
+    pieces.each do |piece|
+      yaml += "  - identificacao: \"#{piece.label}\"\n"
+      yaml += "    largura: #{piece.width}\n"
+      yaml += "    altura: #{piece.height}\n"
+      yaml += "    quantidade: 1  # ajuste conforme necessário\n"
+      yaml += "\n"
+    end
+    
+    yaml
   end
 
   def run_interactive

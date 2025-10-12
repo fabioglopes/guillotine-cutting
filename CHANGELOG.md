@@ -1,5 +1,40 @@
 # Changelog
 
+## [3.0.0] - 2025-10-12
+
+### 🎯 STEP File Import - CAD Integration
+
+#### Adicionado
+- **Parser de arquivos STEP** - Importa diretamente de OnShape, SolidWorks, Fusion 360, FreeCAD
+- **Extração automática de dimensões** - Calcula bounding boxes de geometria 3D
+- **Suporte multi-peças** - Importa todas as peças de um assembly
+- **Modo análise** - Flag `--analyze` para visualizar peças sem otimizar
+- **Opções de chapa via CLI** - `--sheet-width`, `--sheet-height`, `--sheet-quantity`
+- **Geração de YAML** - Cria templates editáveis a partir de STEP
+- **InputLoader unificado** - Suporta YAML e STEP transparentemente
+
+#### Novos Arquivos
+- `lib/step_parser.rb` - Parser completo ISO-10303-21
+- `lib/input_loader.rb` - Carregador unificado de entrada
+- `README_STEP.md` - Guia completo de uso STEP
+- `CHANGELOG_STEP.md` - Changelog detalhado da feature STEP
+- `analyze_step.sh` - Script helper para análise rápida
+- `quick_start_step.sh` - Quick start interativo para STEP
+- `exemplo_caixa.yml` - Exemplo gerado de arquivo STEP
+
+#### Melhorado
+- CLI agora aceita `-f arquivo.step` além de YAML
+- Help text atualizado com novas opções
+- README principal com destaque para STEP
+- Workflow integrado: CAD → STEP → Otimização
+
+#### Casos de Uso
+1. Design de móveis em CAD → Export STEP → Corte otimizado
+2. Projetos de clientes → Import direto → Cálculo de material
+3. Produção em lote → Import uma vez → Ajuste quantidades
+
+---
+
 ## [2.3.0] - 2025-10-12
 
 ### 🖨️ Versão Profissional para Impressão

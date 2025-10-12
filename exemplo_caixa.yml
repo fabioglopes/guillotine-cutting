@@ -1,0 +1,31 @@
+# Gerado automaticamente do arquivo STEP "Part Studio 1.step"
+# Este é um exemplo de caixa com 7 peças idênticas
+# Edite as quantidades conforme necessário
+
+chapas_disponiveis:
+  - identificacao: "Chapa MDF 15mm"
+    largura: 2750  # Chapa padrão
+    altura: 1850
+    quantidade: 2
+
+pecas_necessarias:
+  - identificacao: "Lateral da Caixa"
+    largura: 700
+    altura: 312
+    quantidade: 2  # Duas laterais
+
+  - identificacao: "Tampa/Fundo da Caixa"
+    largura: 700
+    altura: 312
+    quantidade: 2  # Tampa e fundo
+
+  - identificacao: "Frente/Trás da Caixa"
+    largura: 700
+    altura: 312
+    quantidade: 2  # Frente e trás
+
+  - identificacao: "Divisória Interna"
+    largura: 700
+    altura: 312
+    quantidade: 1  # Divisória
+

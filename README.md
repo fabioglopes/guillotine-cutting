@@ -4,6 +4,7 @@ Um software em Ruby para otimizar o corte de chapas de madeira, ideal para marce
 
 ## 📋 Características
 
+- ✅ **Importação direta de arquivos CAD (STEP)** 🆕 🎯
 - ✅ Otimização automática de cortes usando algoritmo Guillotine Bin Packing
 - ✅ Suporte para rotação de peças (opcional)
 - ✅ Consideração da espessura do corte da serra
@@ -31,7 +32,26 @@ Clone o repositório ou baixe os arquivos para um diretório local.
 cd cut-tables
 ```
 
-### Modo 1: Arquivo de Configuração (Recomendado)
+### Modo 1: Importar de Arquivo CAD (STEP) 🆕
+
+**NOVO!** Converta arquivos STEP de OnShape, SolidWorks, Fusion 360, FreeCAD, etc.
+
+```bash
+# Converter STEP para YAML automaticamente
+ruby cut_optimizer.rb -f "meu_projeto.step"
+
+# Ou especifique o nome de saída
+ruby cut_optimizer.rb -f "meu_projeto.step" --output "config.yml"
+
+# Depois edite o YAML gerado e execute a otimização
+ruby cut_optimizer.rb -f "config.yml"
+```
+
+O arquivo STEP é convertido para YAML com todas as peças detectadas. Você só precisa editar as quantidades e dimensões das chapas.
+
+📚 **[Guia Uso STEP](USO_STEP.md)** - Como usar arquivos CAD
+
+### Modo 2: Arquivo de Configuração YAML
 
 1. Crie um arquivo YAML com suas especificações (veja `exemplo.yml`):
 
@@ -64,7 +84,7 @@ O software gera automaticamente:
 - 🖨️ **Versão otimizada para impressão** em `output/print.html` 🆕
 - 🚀 **Abre o navegador automaticamente** com os resultados
 
-### Modo 2: Interativo
+### Modo 3: Interativo
 
 ```bash
 ruby cut_optimizer.rb -i
@@ -214,17 +234,19 @@ O software utiliza o algoritmo **Guillotine Bin Packing**, especialmente adequad
 
 ## 💡 Dicas
 
-1. **Espessura do corte**: Ajuste o parâmetro `-c` de acordo com sua serra (circular: 3-4mm, esquadrejadeira: 2-3mm)
+1. **🆕 Use arquivos CAD**: Exporte do seu CAD para STEP, converta para YAML e ajuste apenas as quantidades - não precisa medir manualmente!
 
-2. **Rotação de peças**: Mantenha ativada para melhor aproveitamento, mas desative se o veio da madeira for importante
+2. **Espessura do corte**: Ajuste o parâmetro `-c` de acordo com sua serra (circular: 3-4mm, esquadrejadeira: 2-3mm)
 
-3. **Margem de segurança**: Adicione 1-2mm nas dimensões das peças para compensar imperfeições
+3. **Rotação de peças**: Mantenha ativada para melhor aproveitamento, mas desative se o veio da madeira for importante
 
-4. **Ordem de corte**: As peças maiores são cortadas primeiro para melhor otimização
+4. **Margem de segurança**: Adicione 1-2mm nas dimensões das peças para compensar imperfeições
 
-5. **Visualização**: SVGs são gerados automaticamente - abra `output/index.html` no navegador para visualizar
+5. **Ordem de corte**: As peças maiores são cortadas primeiro para melhor otimização
 
-6. **🖨️ Para imprimir**: Abra `output/print.html` - versão profissional otimizada para papel A4, com checkboxes e todas as informações necessárias para a oficina!
+6. **Visualização**: SVGs são gerados automaticamente - abra `output/index.html` no navegador para visualizar
+
+7. **🖨️ Para imprimir**: Abra `output/print.html` - versão profissional otimizada para papel A4, com checkboxes e todas as informações necessárias para a oficina!
 
 ## 🤝 Contribuindo
 
