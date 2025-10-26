@@ -1,0 +1,2 @@
+module InventorySheetsHelper
+end

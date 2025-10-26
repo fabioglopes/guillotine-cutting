@@ -64,6 +64,18 @@
               </div>
               <p class="text-xs text-gray-500 mt-1">Agrupa peças similares para reduzir passadas na serra</p>
             </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">📦 Origem das Chapas</label>
+              <div class="flex items-center h-10">
+                <%= f.check_box :use_inventory, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                <%= f.label :use_inventory, "Usar chapas do inventário", class: "ml-2 text-sm text-gray-700" %>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Usa automaticamente as chapas disponíveis no estoque 
+                <%= link_to "(Ver inventário)", inventory_sheets_path, class: "text-indigo-600 hover:text-indigo-800", target: "_blank" %>
+              </p>
+            </div>
           </div>
         </div>
       </div>

@@ -9,10 +9,15 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # Inventory management
+  resources :inventory_sheets, except: [:show]
+
   # Projects routes
   resources :projects do
     member do
       post :optimize
+      post :mark_cut_completed
+      post :unmark_cut_completed
       get 'download/*filename', to: 'projects#download_results', as: :download_file, format: false
     end
   end

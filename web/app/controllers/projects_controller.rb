@@ -1,8 +1,9 @@
 class ProjectsController < ApplicationController
-  before_action :set_project, only: [:show, :edit, :update, :destroy, :optimize, :download_results]
+  before_action :set_project, only: [:show, :edit, :update, :destroy, :optimize, :download_results, :mark_cut_completed, :unmark_cut_completed]
 
   def index
     @projects = Project.recent.all
+    @inventory_sheets = InventorySheet.available
   end
 
   def new
@@ -91,6 +92,37 @@ class ProjectsController < ApplicationController
     end
   end
 
+  def mark_cut_completed
+    if @project.cut_completed?
+      redirect_to @project, alert: 'Este projeto já foi marcado como cortado.'
+      return
+    end
+
+    if @project.mark_as_cut_completed!
+      offcuts_created = InventorySheet.where(source_project_id: @project.id, is_offcut: true).count
+      message = '✅ Projeto marcado como cortado. Inventário atualizado!'
+      if offcuts_created > 0
+        message += " ♻️ #{offcuts_created} sobra(s) adicionada(s) ao inventário."
+      end
+      redirect_to @project, notice: message
+    else
+      redirect_to @project, alert: 'Erro ao marcar projeto como cortado. Verifique se há chapas suficientes no inventário.'
+    end
+  end
+
+  def unmark_cut_completed
+    unless @project.cut_completed?
+      redirect_to @project, alert: 'Este projeto não está marcado como cortado.'
+      return
+    end
+
+    if @project.unmark_as_cut_completed!
+      redirect_to @project, notice: '🔄 Status de corte removido. Chapas devolvidas ao inventário!'
+    else
+      redirect_to @project, alert: 'Erro ao remover status de cortado.'
+    end
+  end
+
   private
 
   def set_project
@@ -104,6 +136,7 @@ class ProjectsController < ApplicationController
       :allow_rotation,
       :guillotine_mode,
       :cutting_width,
+      :use_inventory,
       :input_file,
       sheets_attributes: [:id, :label, :width, :height, :thickness, :quantity, :_destroy],
       pieces_attributes: [:id, :label, :width, :height, :thickness, :quantity, :_destroy]

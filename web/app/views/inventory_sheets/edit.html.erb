@@ -1,0 +1,10 @@
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900">✏️ Editar Chapa do Inventário</h1>
+    <p class="mt-2 text-sm text-gray-700">
+      Atualize as informações da chapa <%= @inventory_sheet.label %>
+    </p>
+  </div>
+
+  <%= render "form", inventory_sheet: @inventory_sheet %>
+</div>

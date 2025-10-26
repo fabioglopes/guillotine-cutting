@@ -6,6 +6,7 @@ puts "🌱 Criando dados de exemplo..."
 
 # Limpar dados existentes
 Project.destroy_all
+InventorySheet.destroy_all
 
 # Projeto 1: Armário de Cozinha
 project1 = Project.create!(
@@ -88,7 +89,62 @@ project3.pieces.create!([
 puts "✅ Projeto 3 criado: #{project3.name} (simulado como concluído)"
 
 puts ""
+puts "📦 Criando inventário de chapas..."
+
+# Adicionar chapas ao inventário
+InventorySheet.create!([
+  { 
+    label: "MDF 15mm Branco",
+    width: 2750,
+    height: 1850,
+    thickness: 15,
+    material: "MDF",
+    quantity: 10,
+    available_quantity: 10
+  },
+  { 
+    label: "MDF 15mm Mogno",
+    width: 2750,
+    height: 1850,
+    thickness: 15,
+    material: "MDF",
+    quantity: 8,
+    available_quantity: 8
+  },
+  {
+    label: "MDF 18mm Branco",
+    width: 2750,
+    height: 1850,
+    thickness: 18,
+    material: "MDF",
+    quantity: 12,
+    available_quantity: 12
+  },
+  {
+    label: "Compensado 12mm",
+    width: 2200,
+    height: 1600,
+    thickness: 12,
+    material: "Compensado",
+    quantity: 6,
+    available_quantity: 6
+  },
+  {
+    label: "MDP 15mm Branco TX",
+    width: 2750,
+    height: 1850,
+    thickness: 15,
+    material: "MDP",
+    quantity: 15,
+    available_quantity: 15
+  }
+])
+
+puts "✅ #{InventorySheet.count} chapas adicionadas ao inventário"
+
+puts ""
 puts "🎉 Seeds concluídos!"
 puts "Total de projetos: #{Project.count}"
 puts "Total de chapas: #{Sheet.count}"
 puts "Total de peças: #{Piece.count}"
+puts "Total no inventário: #{InventorySheet.count} tipos (#{InventorySheet.sum(:available_quantity)} chapas disponíveis)"

@@ -6,11 +6,12 @@
 
 1. [Instalação](#instalação)
 2. [Aplicação Web (Rails)](#aplicação-web-rails)
-3. [Linha de Comando (CLI)](#linha-de-comando-cli)
-4. [Uso de Arquivos STEP (CAD)](#uso-de-arquivos-step-cad)
-5. [Cortes Lineares (1D)](#cortes-lineares-1d)
-6. [Impressão de Resultados](#impressão-de-resultados)
-7. [Solução de Problemas](#solução-de-problemas)
+3. [Sistema de Inventário](#sistema-de-inventário)
+4. [Linha de Comando (CLI)](#linha-de-comando-cli)
+5. [Uso de Arquivos STEP (CAD)](#uso-de-arquivos-step-cad)
+6. [Cortes Lineares (1D)](#cortes-lineares-1d)
+7. [Impressão de Resultados](#impressão-de-resultados)
+8. [Solução de Problemas](#solução-de-problemas)
 
 ---
 
@@ -80,6 +81,131 @@ Acesse: **http://localhost:3000**
 - **print.html** - Versão para impressão A4
 - **index.html** - Visualização interativa
 - **SVGs** - Layouts individuais das chapas
+
+---
+
+## Sistema de Inventário
+
+O sistema web inclui um **gerenciamento completo de estoque de chapas**, permitindo rastrear e controlar o uso de materiais de forma não-destrutiva.
+
+### 📦 Gerenciar Inventário
+
+1. **Acessar**: Menu → `📦 Inventário`
+2. **Adicionar Chapas**: Clique em "Adicionar Chapa"
+   - Identificação (ex: "MDF 15mm Branco")
+   - Dimensões (largura × altura)
+   - Espessura
+   - Material (opcional)
+   - Quantidade total
+   - Quantidade disponível
+
+### 🔄 Usar Inventário em Projetos
+
+1. **Criar Projeto**: Novo Projeto
+2. **Marcar**: ☑️ "Usar chapas do inventário"
+3. **Adicionar apenas peças** (chapas vêm do estoque)
+4. **Processar otimização**
+
+**O que acontece:**
+- Sistema lista todas as chapas disponíveis no estoque
+- Usa automaticamente as chapas necessárias
+- **Rastreia** quais chapas serão usadas (mas não consome ainda)
+- Box "Chapas do Inventário" mostra todas as disponíveis em tempo real
+
+### ✂️ Fluxo de Corte (Não-Destrutivo)
+
+#### 1️⃣ Projeto Otimizado (Status: ⏳ Reservadas)
+- Chapas são **rastreadas** mas não consumidas
+- Inventário **não** é afetado
+- Seção "Chapas do Inventário Utilizadas" mostra:
+  - Quais chapas serão usadas
+  - Quantidades necessárias
+  - Status: `⏳ Reservadas`
+  - ⚠️ Aviso: "Serão consumidas ao marcar como cortado"
+
+#### 2️⃣ Marcar como Cortado
+```
+Botão: ✂️ Marcar como Cortado (verde)
+```
+- **Consome** as chapas do inventário
+- Decrementa `available_quantity`
+- Registra data/hora do corte
+- Status muda para: `✅ Consumidas`
+- Badge: `✅ Cortado em DD/MM/AAAA`
+- **♻️ NOVO:** Gera automaticamente sobras no inventário!
+
+**Geração Automática de Sobras:**
+- Calcula desperdício de cada chapa usada
+- Cria novas chapas de "Sobra" no inventário
+- Só cria se desperdício > 5% E dimensões > 300mm
+- Identificadas com `♻️ Sobra` + origem
+- Totalmente utilizáveis em projetos futuros!
+
+#### 3️⃣ Cancelar Corte (Reversível!)
+```
+Botão: 🔄 Cancelar Corte (amarelo)
+```
+- **Devolve** todas as chapas ao inventário
+- Incrementa `available_quantity`
+- Remove data/hora do corte
+- **Remove** todas as sobras geradas por este projeto
+- Status volta para não cortado
+- **Totalmente reversível e não-destrutivo!**
+
+### 📊 Visualização de Inventário
+
+**Dashboard** mostra:
+- 📦 **Total de Chapas**: Quantidade total cadastrada
+- ✅ **Disponíveis**: Chapas prontas para uso
+- ⚠️ **Em Uso**: Chapas alocadas em projetos
+- ♻️ **Sobras**: Retalhos gerados automaticamente
+
+**Tabela** exibe:
+- Identificação, dimensões, material
+- Quantidade total vs disponível
+- Status visual (Em Estoque / Esgotado)
+- **Sobras destacadas** com fundo amarelo e badge `♻️ Sobra`
+- Link para projeto de origem e chapa pai
+- Ações (Editar / Excluir)
+
+### 🔒 Proteções
+
+- **Transações atômicas**: Tudo ou nada
+- **Validação de estoque**: Não permite cortar sem chapas
+- **Confirmações inteligentes**: Avisos específicos por tipo
+- **Proteção de exclusão**: Não permite excluir chapas em uso
+
+### 💡 Exemplo Prático
+
+```
+1. Adicionar ao Inventário:
+   - "MDF 15mm Branco" (2750×1850mm) → 10 chapas
+   
+2. Criar Projeto:
+   - ☑️ Usar inventário
+   - Adicionar peças
+   
+3. Ver Resultado:
+   - Box mostra: "MDF 15mm Branco: 10 disponíveis"
+   - Otimização usa 2 chapas com 60% eficiência
+   - Seção mostra: "⏳ 2 chapas reservadas"
+   - Inventário continua: 10 disponíveis
+   
+4. Marcar como Cortado:
+   - Inventário atualiza: 8 disponíveis ✅
+   - Sistema cria automaticamente:
+     * 2x "♻️ Sobra MDF 15mm Branco (~40%)"
+     * Dimensões: ~1740×1170mm cada
+   - Notificação: "♻️ 2 sobra(s) adicionada(s) ao inventário"
+   
+5. Usar Sobras em Novo Projeto:
+   - Sobras aparecem automaticamente no inventário
+   - Podem ser usadas normalmente como qualquer chapa
+   
+6. (Opcional) Cancelar:
+   - Inventário volta: 10 disponíveis 🔄
+   - Sobras são removidas automaticamente
+```
 
 ---
 

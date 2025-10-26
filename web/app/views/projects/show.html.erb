@@ -21,7 +21,25 @@
         <% end %>
       </div>
       
-      <div class="flex gap-2">
+      <div class="flex gap-2 flex-wrap">
+        <% if @project.optimized? && !@project.cut_completed? %>
+          <%= button_to mark_cut_completed_project_path(@project), method: :post, 
+              data: { turbo_confirm: "Confirmar que o projeto foi cortado?\n\n" + (@project.use_inventory? ? "⚠️ Isso consumirá as chapas do inventário." : "Isso marcará o projeto como concluído.") },
+              class: "bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2" do %>
+            ✂️ Marcar como Cortado
+          <% end %>
+        <% elsif @project.cut_completed? %>
+          <div class="flex gap-2 items-center">
+            <span class="bg-green-100 text-green-800 font-bold py-2 px-4 rounded-lg flex items-center gap-2">
+              ✅ Cortado em <%= @project.cut_completed_at.strftime('%d/%m/%Y às %H:%M') %>
+            </span>
+            <%= button_to unmark_cut_completed_project_path(@project), method: :post,
+                data: { turbo_confirm: "Desmarcar este projeto como cortado?\n\n" + (@project.use_inventory? ? "🔄 As chapas serão devolvidas ao inventário." : "Isso reverterá o status para não cortado.") },
+                class: "bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200 flex items-center gap-2" do %>
+              🔄 Cancelar Corte
+            <% end %>
+          </div>
+        <% end %>
         <%= link_to edit_project_path(@project), class: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg transition duration-200" do %>
           ✏️ Editar
         <% end %>
@@ -73,6 +91,16 @@
       <h2 class="text-lg font-semibold text-gray-900 mb-4">⚙️ Configuração</h2>
       <dl class="space-y-3 text-sm">
         <div>
+          <dt class="text-gray-500">Origem das Chapas</dt>
+          <dd class="text-gray-900 font-medium">
+            <% if @project.use_inventory? %>
+              📦 Inventário
+            <% else %>
+              ✏️ Manual
+            <% end %>
+          </dd>
+        </div>
+        <div>
           <dt class="text-gray-500">Espessura do Corte</dt>
           <dd class="text-gray-900 font-medium"><%= @project.cutting_width %>mm</dd>
         </div>
@@ -95,18 +123,50 @@
 
     <!-- Sheets -->
     <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-      <h2 class="text-lg font-semibold text-gray-900 mb-4">📋 Chapas (<%= @project.sheets.count %>)</h2>
-      <div class="space-y-2 text-sm max-h-48 overflow-y-auto">
-        <% @project.sheets.each do |sheet| %>
-          <div class="flex justify-between items-start p-2 bg-gray-50 rounded">
-            <div>
-              <p class="font-medium text-gray-900"><%= sheet.label %></p>
-              <p class="text-gray-500"><%= sheet.width %> × <%= sheet.height %>mm</p>
+      <% if @project.use_inventory? %>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+          📦 Chapas do Inventário 
+          <span class="text-sm font-normal text-gray-500">(Disponíveis)</span>
+        </h2>
+        <div class="space-y-2 text-sm max-h-48 overflow-y-auto">
+          <% InventorySheet.available.order(:label).each do |inv_sheet| %>
+            <div class="flex justify-between items-start p-2 bg-indigo-50 rounded border border-indigo-100">
+              <div class="flex-1">
+                <p class="font-medium text-gray-900"><%= inv_sheet.label %></p>
+                <p class="text-gray-500 text-xs">
+                  <%= inv_sheet.width %> × <%= inv_sheet.height %>mm 
+                  • <%= inv_sheet.thickness %>mm
+                  <% if inv_sheet.material.present? %>
+                    • <%= inv_sheet.material %>
+                  <% end %>
+                </p>
+              </div>
+              <div class="text-right">
+                <span class="text-gray-600 font-medium">×<%= inv_sheet.available_quantity %></span>
+                <p class="text-xs text-gray-400">de <%= inv_sheet.quantity %></p>
+              </div>
             </div>
-            <span class="text-gray-600">×<%= sheet.quantity %></span>
-          </div>
-        <% end %>
-      </div>
+          <% end %>
+          <% if InventorySheet.available.none? %>
+            <p class="text-gray-500 text-center py-4">
+              Nenhuma chapa disponível no inventário
+            </p>
+          <% end %>
+        </div>
+      <% else %>
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">📋 Chapas (<%= @project.sheets.count %>)</h2>
+        <div class="space-y-2 text-sm max-h-48 overflow-y-auto">
+          <% @project.sheets.each do |sheet| %>
+            <div class="flex justify-between items-start p-2 bg-gray-50 rounded">
+              <div>
+                <p class="font-medium text-gray-900"><%= sheet.label %></p>
+                <p class="text-gray-500"><%= sheet.width %> × <%= sheet.height %>mm</p>
+              </div>
+              <span class="text-gray-600">×<%= sheet.quantity %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     </div>
 
     <!-- Pieces -->
@@ -124,6 +184,45 @@
         <% end %>
       </div>
     </div>
+    
+    <!-- Inventory Usage (if applicable) -->
+    <% if @project.use_inventory? && @project.project_inventory_usages.any? %>
+      <div class="bg-white rounded-lg shadow-sm p-6 border border-indigo-200">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">📦 Chapas do Inventário Utilizadas</h2>
+        <div class="space-y-2 text-sm">
+          <% @project.project_inventory_usages.includes(:inventory_sheet).each do |usage| %>
+            <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+              <div class="flex-1">
+                <p class="font-medium text-gray-900"><%= usage.inventory_sheet.label %></p>
+                <p class="text-gray-500 text-xs">
+                  <%= usage.inventory_sheet.width %> × <%= usage.inventory_sheet.height %>mm 
+                  • <%= usage.inventory_sheet.thickness %>mm
+                  <% if usage.inventory_sheet.material.present? %>
+                    • <%= usage.inventory_sheet.material %>
+                  <% end %>
+                </p>
+              </div>
+              <div class="text-right ml-4">
+                <span class="text-lg font-bold text-indigo-600">×<%= usage.quantity_used %></span>
+                <% if @project.cut_completed? %>
+                  <p class="text-xs text-green-600 font-medium">✅ Consumidas</p>
+                <% else %>
+                  <p class="text-xs text-yellow-600 font-medium">⏳ Reservadas</p>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        </div>
+        
+        <% unless @project.cut_completed? %>
+          <div class="mt-4 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p class="text-xs text-yellow-800">
+              ⚠️ <strong>Atenção:</strong> Estas chapas serão consumidas do inventário quando você marcar o projeto como "Cortado".
+            </p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 
   <!-- Results Section -->

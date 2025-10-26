@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_26_145818) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_26_162528) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -39,6 +39,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_145818) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "inventory_sheets", force: :cascade do |t|
+    t.integer "available_quantity"
+    t.datetime "created_at", null: false
+    t.decimal "height"
+    t.boolean "is_offcut"
+    t.string "label"
+    t.string "material"
+    t.integer "parent_sheet_id"
+    t.integer "quantity"
+    t.integer "source_project_id"
+    t.decimal "thickness"
+    t.datetime "updated_at", null: false
+    t.decimal "width"
+  end
+
   create_table "pieces", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "height"
@@ -51,9 +66,21 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_145818) do
     t.index ["project_id"], name: "index_pieces_on_project_id"
   end
 
+  create_table "project_inventory_usages", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "inventory_sheet_id", null: false
+    t.integer "project_id", null: false
+    t.integer "quantity_used"
+    t.datetime "updated_at", null: false
+    t.index ["inventory_sheet_id"], name: "index_project_inventory_usages_on_inventory_sheet_id"
+    t.index ["project_id"], name: "index_project_inventory_usages_on_project_id"
+  end
+
   create_table "projects", force: :cascade do |t|
     t.boolean "allow_rotation"
     t.datetime "created_at", null: false
+    t.boolean "cut_completed"
+    t.datetime "cut_completed_at"
     t.integer "cutting_width"
     t.text "description"
     t.decimal "efficiency"
@@ -64,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_145818) do
     t.integer "sheets_used"
     t.string "status"
     t.datetime "updated_at", null: false
+    t.boolean "use_inventory"
   end
 
   create_table "sheets", force: :cascade do |t|
@@ -81,5 +109,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_145818) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "pieces", "projects"
+  add_foreign_key "project_inventory_usages", "inventory_sheets"
+  add_foreign_key "project_inventory_usages", "projects"
   add_foreign_key "sheets", "projects"
 end

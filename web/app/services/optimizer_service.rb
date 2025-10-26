@@ -33,6 +33,9 @@ class OptimizerService
 
       # Update project statistics
       update_project_stats(optimizer)
+      
+      # Track which inventory sheets were used (but don't reserve yet - only when marked as cut)
+      track_inventory_usage(optimizer) if @project.use_inventory?
 
       true
     rescue => e
@@ -63,13 +66,28 @@ class OptimizerService
 
   def load_sheets
     sheets = []
-    @project.sheets.each_with_index do |sheet_record, idx|
-      sheet_record.quantity.times do |i|
-        sheet_id = "S#{idx + 1}.#{i + 1}"
-        sheet_label = "#{sheet_record.label} ##{i + 1}"
-        sheets << OptimizerSheet.new(sheet_id, sheet_record.width, sheet_record.height, sheet_label)
+    
+    if @project.use_inventory?
+      # Use inventory sheets
+      inventory_sheets = InventorySheet.available.order(:label)
+      inventory_sheets.each_with_index do |inv_sheet, idx|
+        inv_sheet.available_quantity.times do |i|
+          sheet_id = "INV#{idx + 1}.#{i + 1}"
+          # Use the inventory sheet label directly (without appending #N - optimizer adds it)
+          sheets << OptimizerSheet.new(sheet_id, inv_sheet.width, inv_sheet.height, inv_sheet.label)
+        end
+      end
+    else
+      # Use manually input sheets
+      @project.sheets.each_with_index do |sheet_record, idx|
+        sheet_record.quantity.times do |i|
+          sheet_id = "S#{idx + 1}.#{i + 1}"
+          sheet_label = "#{sheet_record.label} ##{i + 1}"
+          sheets << OptimizerSheet.new(sheet_id, sheet_record.width, sheet_record.height, sheet_label)
+        end
       end
     end
+    
     sheets
   end
 
@@ -226,6 +244,33 @@ class OptimizerService
   rescue => e
     @errors << "Error parsing STEP: #{e.message}"
     false
+  end
+
+  def track_inventory_usage(optimizer)
+    # Clear previous usages (in case of re-optimization)
+    @project.project_inventory_usages.destroy_all
+    
+    # Group used sheets by their original inventory sheet
+    used_sheets_by_label = {}
+    
+    optimizer.used_sheets.each do |used_sheet|
+      # Extract the base label (remove the #N part)
+      base_label = used_sheet.label.gsub(/ #\d+$/, '')
+      used_sheets_by_label[base_label] ||= 0
+      used_sheets_by_label[base_label] += 1
+    end
+    
+    # Track the sheets that will be used (but don't reserve yet)
+    used_sheets_by_label.each do |label, quantity|
+      inv_sheet = InventorySheet.find_by(label: label)
+      next unless inv_sheet
+      
+      # Just record the usage, don't reserve yet (reservation happens when marked as cut)
+      @project.project_inventory_usages.create!(
+        inventory_sheet: inv_sheet,
+        quantity_used: quantity
+      )
+    end
   end
 end
 
