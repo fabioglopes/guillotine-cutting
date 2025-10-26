@@ -102,6 +102,7 @@ class ProjectsController < ApplicationController
       :name,
       :description,
       :allow_rotation,
+      :guillotine_mode,
       :cutting_width,
       :input_file,
       sheets_attributes: [:id, :label, :width, :height, :thickness, :quantity, :_destroy],

@@ -81,6 +81,12 @@
           <dd class="text-gray-900 font-medium"><%= @project.allow_rotation ? "✅ Permitida" : "❌ Não permitida" %></dd>
         </div>
         <div>
+          <dt class="text-gray-500">Modo de Otimização</dt>
+          <dd class="text-gray-900 font-medium">
+            <%= @project.guillotine_mode ? "🔪 Guilhotina" : "📐 Normal" %>
+          </dd>
+        </div>
+        <div>
           <dt class="text-gray-500">Criado em</dt>
           <dd class="text-gray-900 font-medium"><%= l(@project.created_at, format: :long) %></dd>
         </div>

@@ -3,6 +3,7 @@
 require_relative 'lib/piece'
 require_relative 'lib/sheet'
 require_relative 'lib/cutting_optimizer'
+require_relative 'lib/guillotine_optimizer'
 require_relative 'lib/report_generator'
 require_relative 'lib/input_loader'
 require 'yaml'
@@ -18,7 +19,8 @@ class CutOptimizerCLI
       export_svg: true,  # Gerar SVG por padrão
       auto_open: true,   # Abrir navegador automaticamente
       interactive: false,
-      convert_to_yaml: nil
+      convert_to_yaml: nil,
+      guillotine_mode: false  # Modo para minimizar cortes
     }
   end
 
@@ -68,6 +70,10 @@ class CutOptimizerCLI
 
       opts.on("-c", "--cutting-width MM", Integer, "Espessura do corte da serra em mm (padrão: 3)") do |w|
         @options[:cutting_width] = w
+      end
+
+      opts.on("-g", "--guillotine", "Modo guilhotina: minimizar número de cortes") do
+        @options[:guillotine_mode] = true
       end
 
       opts.on("-j", "--json", "Exportar relatório em JSON") do
@@ -314,7 +320,14 @@ class CutOptimizerCLI
   end
 
   def run_optimization(available_sheets, required_pieces)
-    optimizer = CuttingOptimizer.new(available_sheets, required_pieces)
+    # Escolher otimizador baseado no modo
+    if @options[:guillotine_mode]
+      puts "\n🔪 Modo Guilhotina Ativado - Minimizando cortes!"
+      optimizer = GuillotineOptimizer.new(available_sheets, required_pieces)
+    else
+      optimizer = CuttingOptimizer.new(available_sheets, required_pieces)
+    end
+    
     optimizer.optimize(
       allow_rotation: @options[:allow_rotation],
       cutting_width: @options[:cutting_width]

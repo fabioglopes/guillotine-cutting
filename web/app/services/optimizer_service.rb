@@ -15,8 +15,14 @@ class OptimizerService
 
       return false if sheets.empty? || pieces.empty?
 
-      # Run optimization
-      optimizer = CuttingOptimizer.new(sheets, pieces)
+      # Choose optimizer based on mode
+      if @project.guillotine_mode
+        puts "🔪 Modo Guilhotina Ativado - Minimizando cortes!"
+        optimizer = GuillotineOptimizer.new(sheets, pieces)
+      else
+        optimizer = CuttingOptimizer.new(sheets, pieces)
+      end
+      
       optimizer.optimize(
         allow_rotation: @project.allow_rotation,
         cutting_width: @project.cutting_width || 3

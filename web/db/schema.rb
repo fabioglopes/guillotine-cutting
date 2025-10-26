@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_26_120630) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_26_145818) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -57,6 +57,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_120630) do
     t.integer "cutting_width"
     t.text "description"
     t.decimal "efficiency"
+    t.boolean "guillotine_mode"
     t.string "name"
     t.integer "pieces_placed"
     t.integer "pieces_total"

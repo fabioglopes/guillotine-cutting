@@ -67,7 +67,8 @@ Acesse: **http://localhost:3000**
    - Identificação, largura, altura, quantidade
 4. Adicione peças (botão "+")
    - Identificação, largura, altura, quantidade
-5. Clique em "Criar Projeto"
+5. **Modo Guilhotina** (opcional): Marque para minimizar cortes
+6. Clique em "Criar Projeto"
 
 ### Processar Otimização
 1. Abra o projeto
@@ -108,24 +109,33 @@ ruby cut_optimizer.rb -i
 ### Opções Disponíveis
 
 ```bash
+# Modo Guilhotina - minimiza número de cortes (ideal para produção)
+ruby cut_optimizer.rb -f exemplo.yml --guillotine
+ruby cut_optimizer.rb -f exemplo.yml -g
+
 # Desabilitar rotação
 ruby cut_optimizer.rb -f exemplo.yml --no-rotation
 
 # Alterar espessura do corte (padrão: 3mm)
 ruby cut_optimizer.rb -f exemplo.yml -c 4
 
+# Combinar opções
+ruby cut_optimizer.rb -f exemplo.yml -g --no-rotation -c 5
+
 # Exportar JSON
 ruby cut_optimizer.rb -f exemplo.yml -j
 
-# Desabilitar SVG
-ruby cut_optimizer.rb -f exemplo.yml --no-svg
-
-# Desabilitar abertura do navegador
-ruby cut_optimizer.rb -f exemplo.yml --no-open
+# Desabilitar SVG/navegador
+ruby cut_optimizer.rb -f exemplo.yml --no-svg --no-open
 
 # Ver todas as opções
 ruby cut_optimizer.rb --help
 ```
+
+**🔪 Modo Guilhotina vs Normal:**
+- **Normal:** Maximiza aproveitamento (80-95%) mas requer mais cortes
+- **Guilhotina:** Agrupa peças por dimensão, reduz cortes em até 70%, mas usa mais material (~60-85% eficiência)
+- Use guilhotina para: produção em série, peças similares, economia de tempo
 
 ### Arquivo YAML - Estrutura
 
