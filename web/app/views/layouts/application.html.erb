@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Otimizador de Cortes" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Otimizador de Cortes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <div class="flex justify-between items-center">
+          <%= link_to root_path, class: "flex items-center" do %>
+            <span class="text-2xl">🪚</span>
+            <span class="ml-2 text-xl font-bold text-gray-900">Otimizador de Cortes</span>
+          <% end %>
+          
+          <nav class="flex items-center space-x-4">
+            <%= link_to "Projetos", projects_path, class: "text-gray-600 hover:text-gray-900 font-medium" %>
+            <%= link_to "Novo Projeto", new_project_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200" %>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Flash Messages -->
+    <% if notice.present? %>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4 flex items-center justify-between">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-green-800"><%= notice %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <% if alert.present? %>
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 flex items-center justify-between">
+          <div class="flex items-center">
+            <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-red-800"><%= alert %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
+    <!-- Main Content -->
+    <main>
+      <%= yield %>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <p class="text-center text-gray-500 text-sm">
+          Otimizador de Cortes • Desenvolvido com ❤️ para marceneiros
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

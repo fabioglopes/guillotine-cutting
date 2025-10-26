@@ -1,317 +1,185 @@
-# 🪚 Otimizadores de Corte para Madeira e Metais
+# 🪚 Otimizador de Cortes para Madeira e Metais
 
 Software completo em Ruby para otimizar cortes de materiais, ideal para marcenaria, serralheria e construção.
 
+## 🌐 Duas Formas de Usar
+
+### 🖥️ **Aplicação Web (Recomendado)**
+Interface web moderna com Rails:
+- Upload de arquivos YAML/STEP (CAD)
+- Formulário interativo
+- Histórico de projetos
+- Visualização inline de resultados
+
+**[📖 Ver guia da aplicação web](web/README_WEB.md)**
+
+```bash
+cd web
+./quick_start.sh
+# Acesse: http://localhost:3000
+```
+
+### ⌨️ **Linha de Comando (CLI)**
+Script Ruby direto no terminal:
+- Rápido e leve
+- Sem dependências extras
+
+```bash
+ruby cut_optimizer.rb -f exemplo.yml
+```
+
+---
+
 ## 📦 Dois Otimizadores Incluídos
 
-### 1️⃣ **Otimizador 2D** - Chapas e Placas
+### 1️⃣ Otimizador 2D - Chapas e Placas
 Para materiais com 2 dimensões (largura × altura):
 - Chapas de MDF, compensado, OSB
 - Placas metálicas
 - Vidros e acrílico
 
-### 2️⃣ **Otimizador 1D (Linear)** - Tubos e Barras 🆕
+### 2️⃣ Otimizador 1D - Tubos e Barras
 Para materiais com 1 dimensão (comprimento):
 - Tubos quadrados/redondos
 - Barras de aço/alumínio
 - Sarrafos e ripas de madeira
-- Perfis metálicos
 
-📚 **[Guia Completo de Cortes Lineares](LINEAR_CUTS.md)**
+---
 
-## 📋 Características
+## ✨ Principais Características
 
-- ✅ **Importação direta de arquivos CAD (STEP)** 🆕 🎯
-- ✅ **Agrupamento automático por espessura** 🆕 📊
-- ✅ **Suporte bilíngue (português/inglês)** 🆕 🌍
-- ✅ Otimização automática de cortes usando algoritmo Guillotine Bin Packing
-- ✅ Suporte para rotação de peças (opcional)
-- ✅ Consideração da espessura do corte da serra
-- ✅ **Relatórios visuais em SVG gerados automaticamente**
-- ✅ **Página HTML interativa com todos os layouts**
-- ✅ **Versão profissional para impressão** (A4, pronta para oficina)
-- ✅ **Abre navegador automaticamente** com os resultados
-- ✅ Relatórios detalhados em texto, JSON e SVG
-- ✅ Modo interativo e por arquivo de configuração
-- ✅ Cálculo de eficiência de aproveitamento das chapas
-- ✅ Identificação de peças que não puderam ser alocadas
-- ✅ Layouts profissionais prontos para impressão
+- ✅ **Importação de arquivos CAD (STEP)** - OnShape, SolidWorks, Fusion 360
+- ✅ **Otimização automática** - Algoritmo Guillotine Bin Packing
+- ✅ **Relatórios visuais em SVG** - Layouts coloridos e detalhados
+- ✅ **Versão para impressão** - Formato A4 com checkboxes
+- ✅ **Suporte bilíngue** - Português e Inglês
+- ✅ **Interface web** - Gestão completa de projetos
+- ✅ **Rotação de peças** - Opcional para melhor aproveitamento
 
-## 🚀 Como Usar
+---
 
-### Requisitos
+## 🚀 Início Rápido
 
-- Ruby 2.7 ou superior
-
-### Instalação
-
-Clone o repositório ou baixe os arquivos para um diretório local.
-
+### Aplicação Web
 ```bash
-cd cut-tables
+cd web
+./quick_start.sh
 ```
 
-### Modo 1: Importar de Arquivo CAD (STEP) 🆕
-
-**NOVO!** Converta arquivos STEP de OnShape, SolidWorks, Fusion 360, FreeCAD, etc.
-
+### CLI - Arquivo YAML
 ```bash
-# Converter STEP para YAML automaticamente
-ruby cut_optimizer.rb -f "meu_projeto.step"
-
-# Ou especifique o nome de saída
-ruby cut_optimizer.rb -f "meu_projeto.step" --output "config.yml"
-
-# Depois edite o YAML gerado e execute a otimização
-ruby cut_optimizer.rb -f "config.yml"
+ruby cut_optimizer.rb -f exemplo.yml
 ```
 
-O arquivo STEP é convertido para YAML **bilíngue** com:
-- ✅ Todas as peças detectadas
-- ✅ Espessuras identificadas
-- ✅ Agrupamento automático por espessura
-- ✅ Campos em português e inglês
+### CLI - Arquivo STEP (CAD)
+```bash
+# Converte STEP para YAML
+ruby cut_optimizer.rb -f projeto.step
 
-Você só precisa editar as quantidades e dimensões das chapas!
+# Edita o YAML e executa
+ruby cut_optimizer.rb -f projeto.yml
+```
 
-📚 **[Guia Uso STEP](USO_STEP.md)** - Como usar arquivos CAD  
-🌍 **[Suporte Bilíngue](BILINGUAL_SUPPORT.md)** - Português e Inglês
+### CLI - Cortes Lineares
+```bash
+ruby linear_cut_optimizer.rb -f exemplo_tubos.yml
+```
 
-### Modo 2: Arquivo de Configuração YAML
+---
 
-1. Crie um arquivo YAML com suas especificações (veja `exemplo.yml`):
+## 📚 Documentação
+
+- **[📖 Guia Completo](GUIA_COMPLETO.md)** - Todas as instruções de uso
+- **[🌐 Guia Web App](web/README_WEB.md)** - Aplicação Rails
+- **[📁 Documentação Técnica](docs/)** - Detalhes de implementação
+
+---
+
+## 📋 Exemplo de Arquivo YAML
 
 ```yaml
+# Chapas disponíveis
 chapas_disponiveis:
-  - identificacao: "Chapa MDF 15mm"
-    largura: 2750  # em milímetros
+  - identificacao: "MDF 15mm"
+    largura: 2750
     altura: 1850
     quantidade: 2
 
+# Peças necessárias
 pecas_necessarias:
   - identificacao: "Prateleira"
     largura: 900
     altura: 300
     quantidade: 4
+  - identificacao: "Lateral"
+    largura: 1800
+    altura: 400
+    quantidade: 2
 ```
 
-2. Execute o otimizador:
+---
 
-```bash
-ruby cut_optimizer.rb -f exemplo.yml
-```
+## 📊 Resultados Gerados
 
-**O navegador abrirá automaticamente** com os layouts! 🌐
+### CLI
+- **console** - Relatório detalhado em texto
+- **output/index.html** - Visualização interativa
+- **output/print.html** - Versão para impressão A4
+- **output/sheet_*.svg** - Layouts individuais
+- **JSON** - Dados estruturados (opcional)
 
-O software gera automaticamente:
-- 📊 Relatório detalhado no console
-- 🎨 SVGs de cada chapa em `output/`
-- 🌐 Página HTML interativa em `output/index.html`
-- 🖨️ **Versão otimizada para impressão** em `output/print.html` 🆕
-- 🚀 **Abre o navegador automaticamente** com os resultados
+### Web App
+- Visualização inline no navegador
+- Downloads de HTMLs e SVGs
+- Histórico persistente no banco
 
-### Modo 3: Interativo
+---
 
-```bash
-ruby cut_optimizer.rb -i
-```
+## 🎯 Exemplos Incluídos
 
-O programa irá guiá-lo passo a passo para inserir chapas e peças.
+- `exemplo.yml` - Exemplo básico
+- `exemplo_armario.yml` - Armário completo
+- `exemplo_caixa.yml` - Caixa simples
+- `exemplo_tubos.yml` - Cortes lineares
+- `Part Studio 1.step` - Exemplo CAD
 
-### Opções Avançadas
+---
 
-```bash
-# Desabilitar rotação de peças
-ruby cut_optimizer.rb -f exemplo.yml --no-rotation
+## 💡 Dicas
 
-# Alterar espessura do corte (padrão: 3mm)
-ruby cut_optimizer.rb -f exemplo.yml -c 4
+1. **Use arquivos CAD**: Exporte STEP e converta automaticamente
+2. **Espessura do corte**: Ajuste conforme sua serra (padrão: 3mm)
+3. **Rotação**: Mantenha ativada para melhor aproveitamento
+4. **Impressão**: Use `print.html` para levar à oficina
 
-# Exportar relatório em JSON
-ruby cut_optimizer.rb -f exemplo.yml -j
-
-# Desabilitar geração de SVG (ativado por padrão)
-ruby cut_optimizer.rb -f exemplo.yml --no-svg
-
-# Desabilitar abertura automática do navegador
-ruby cut_optimizer.rb -f exemplo.yml --no-open
-
-# Combinar opções
-ruby cut_optimizer.rb -f exemplo.yml -j -c 3 --no-rotation
-```
-
-**Notas:** 
-- SVGs são gerados automaticamente em `output/` (use `--no-svg` para desabilitar)
-- O navegador abre automaticamente (use `--no-open` para desabilitar)
-
-### Ver todas as opções
-
-```bash
-ruby cut_optimizer.rb --help
-```
-
-## 📊 Entendendo os Relatórios
-
-O programa gera múltiplos tipos de relatórios:
-
-### 1. **Relatório no Console**
-   - Total de peças necessárias
-   - Peças cortadas com sucesso
-   - Chapas utilizadas
-   - Eficiência geral de aproveitamento
-   - Detalhes por chapa com posições
-   - Layout ASCII simplificado
-   - Peças não alocadas (se houver)
-
-### 2. **Página HTML Interativa** (`output/index.html`)
-   - Visualização completa de todos os layouts
-   - **Botão para versão de impressão** (canto superior direito) 🆕
-   - Cards interativos para cada chapa
-   - Resumo com estatísticas gerais
-   - Grid responsivo que se adapta à tela
-   - Botões para download dos SVGs individuais
-   - Pronto para impressão
-
-### 3. **SVGs Individuais** (`output/sheet_N.svg`)
-   - Layout visual de cada chapa
-   - Peças coloridas com labels
-   - Legenda lateral com todas as informações
-   - Cotas dimensionais
-   - Indicadores de rotação (↻)
-   - Coordenadas exatas de cada peça
-   - Estatísticas de aproveitamento
-
-### 4. **Versão para Impressão** (`output/print.html`)
-   - Layout otimizado para papel A4
-   - Uma chapa por página
-   - Tabelas detalhadas com checkboxes
-   - Coordenadas e medidas precisas
-   - Instruções para marcenaria
-   - Perfeito para levar à oficina
-
-### 5. **JSON** (opcional com `-j`)
-   - Dados estruturados para integração
-   - Todas as informações programaticamente acessíveis
-
-## 🎯 Exemplo de Uso
-
-```bash
-ruby cut_optimizer.rb -f exemplo.yml
-```
-
-Saída:
-```
-=== Iniciando otimização de cortes ===
-Total de peças a cortar: 22
-Chapas disponíveis: 3
-Espessura de corte (serra): 3mm
-Rotação permitida: Sim
-  Chapa Chapa MDF 15mm #1: 8 peças colocadas (73.45% utilizada)
-  Chapa Chapa MDF 15mm #2: 10 peças colocadas (68.92% utilizada)
-  Chapa Chapa Compensado #1: 4 peças colocadas (45.23% utilizada)
-
-=== Otimização concluída ===
-Chapas utilizadas: 3
-Peças cortadas: 22
-Peças não colocadas: 0
-
---- GERANDO LAYOUTS SVG ---
-  ✓ Chapa MDF 15mm #1: output/sheet_1.svg
-  ✓ Chapa MDF 15mm #2: output/sheet_2.svg
-  ✓ Chapa Compensado #1: output/sheet_3.svg
-  ✓ Índice HTML: output/index.html
-  ✓ Versão para impressão: output/print.html
-
-🌐 Abrindo navegador com os layouts...
-📄 Para imprimir: abra output/print.html
-```
-
-**O navegador abre automaticamente mostrando os layouts visuais!** 🎨
+---
 
 ## 🔧 Estrutura do Projeto
 
 ```
 cut-tables/
-├── cut_optimizer.rb          # Script principal (CLI)
-├── lib/
-│   ├── piece.rb              # Classe Piece (peça)
-│   ├── sheet.rb              # Classe Sheet (chapa)
-│   ├── cutting_optimizer.rb  # Motor de otimização
-│   ├── guillotine_bin_packer.rb  # Algoritmo de empacotamento
-│   └── report_generator.rb   # Gerador de relatórios
-├── output/                   # Arquivos gerados
-│   ├── index.html            # Visualização interativa
-│   ├── print.html            # 🖨️ Versão para impressão
-│   ├── sheet_1.svg           # SVG da chapa 1
-│   └── sheet_2.svg           # SVG da chapa 2
-├── exemplo.yml               # Arquivo de exemplo
-├── imprimir.sh               # Script para abrir versão de impressão
-└── README.md                 # Este arquivo
+├── cut_optimizer.rb           # CLI - Otimizador 2D
+├── linear_cut_optimizer.rb    # CLI - Otimizador 1D
+├── lib/                       # Biblioteca principal
+├── web/                       # Aplicação Rails
+├── output/                    # Resultados gerados (CLI)
+├── exemplo*.yml               # Arquivos de exemplo
+├── GUIA_COMPLETO.md          # Guia consolidado
+└── docs/                      # Documentação técnica
 ```
 
-## 🧮 Algoritmo
+---
 
-O software utiliza o algoritmo **Guillotine Bin Packing**, especialmente adequado para cortes em marcenaria porque:
+## 📞 Suporte
 
-- Simula cortes retos (como uma serra faz)
-- Otimiza o aproveitamento do espaço
-- Minimiza desperdício de material
-- Considera a espessura do corte da serra
+Problemas? Consulte o [**Guia Completo**](GUIA_COMPLETO.md) seção "Solução de Problemas".
 
-## 💡 Dicas
-
-1. **🆕 Use arquivos CAD**: Exporte do seu CAD para STEP, converta para YAML e ajuste apenas as quantidades - não precisa medir manualmente!
-
-2. **Espessura do corte**: Ajuste o parâmetro `-c` de acordo com sua serra (circular: 3-4mm, esquadrejadeira: 2-3mm)
-
-3. **Rotação de peças**: Mantenha ativada para melhor aproveitamento, mas desative se o veio da madeira for importante
-
-4. **Margem de segurança**: Adicione 1-2mm nas dimensões das peças para compensar imperfeições
-
-5. **Ordem de corte**: As peças maiores são cortadas primeiro para melhor otimização
-
-6. **Visualização**: SVGs são gerados automaticamente - abra `output/index.html` no navegador para visualizar
-
-7. **🖨️ Para imprimir**: Abra `output/print.html` - versão profissional otimizada para papel A4, com checkboxes e todas as informações necessárias para a oficina!
-
-## 🤝 Contribuindo
-
-Sugestões e melhorias são bem-vindas! Sinta-se livre para modificar o código conforme suas necessidades.
+---
 
 ## 📝 Licença
 
 Software livre para uso pessoal e comercial.
 
-## 🎓 Para Desenvolvedores
-
-### Usando como biblioteca
-
-```ruby
-require_relative 'lib/cutting_optimizer'
-require_relative 'lib/sheet'
-require_relative 'lib/piece'
-
-# Definir chapas
-sheets = [
-  Sheet.new('S1', 2750, 1850, 'MDF 15mm')
-]
-
-# Definir peças
-pieces = [
-  Piece.new('P1', 900, 300, 4, 'Prateleira')
-]
-
-# Otimizar
-optimizer = CuttingOptimizer.new(sheets, pieces)
-optimizer.optimize(allow_rotation: true, cutting_width: 3)
-
-# Acessar resultados
-optimizer.used_sheets.each do |sheet|
-  puts "Chapa: #{sheet.label}, Eficiência: #{sheet.efficiency}%"
-end
-```
-
 ---
 
-Desenvolvido com ❤️ para marceneiros e entusiastas de marcenaria!
-
+**Desenvolvido com ❤️ para marceneiros e entusiastas de marcenaria!**

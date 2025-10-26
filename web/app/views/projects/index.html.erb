@@ -1,0 +1,74 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="flex justify-between items-center mb-8">
+    <div>
+      <h1 class="text-4xl font-bold text-gray-900">🪚 Projetos de Corte</h1>
+      <p class="text-gray-600 mt-2">Gerencie seus projetos de otimização de cortes</p>
+    </div>
+    <%= link_to new_project_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg transition duration-200 inline-flex items-center" do %>
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+      Novo Projeto
+    <% end %>
+  </div>
+
+  <% if @projects.empty? %>
+    <div class="bg-white rounded-lg shadow-sm p-12 text-center">
+      <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+      </svg>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum projeto ainda</h3>
+      <p class="text-gray-500 mb-6">Comece criando seu primeiro projeto de otimização de cortes.</p>
+      <%= link_to "Criar Primeiro Projeto", new_project_path, class: "bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-lg transition duration-200" %>
+    </div>
+  <% else %>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <% @projects.each do |project| %>
+        <div class="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden border border-gray-200">
+          <div class="p-6">
+            <div class="flex items-start justify-between mb-4">
+              <h3 class="text-xl font-semibold text-gray-900 line-clamp-1"><%= project.name %></h3>
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= status_badge_class(project.status) %>">
+                <%= status_text(project.status) %>
+              </span>
+            </div>
+            
+            <% if project.description.present? %>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2"><%= project.description %></p>
+            <% end %>
+
+            <% if project.optimized? %>
+              <div class="grid grid-cols-2 gap-3 mb-4 text-sm">
+                <div class="bg-gray-50 p-3 rounded">
+                  <p class="text-gray-500 text-xs">Chapas</p>
+                  <p class="text-gray-900 font-semibold"><%= project.sheets_used %></p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded">
+                  <p class="text-gray-500 text-xs">Peças</p>
+                  <p class="text-gray-900 font-semibold"><%= project.pieces_placed %>/<%= project.pieces_total %></p>
+                </div>
+                <div class="bg-gray-50 p-3 rounded col-span-2">
+                  <p class="text-gray-500 text-xs">Eficiência</p>
+                  <div class="flex items-center mt-1">
+                    <div class="flex-1 bg-gray-200 rounded-full h-2 mr-2">
+                      <div class="bg-green-500 h-2 rounded-full" style="width: <%= project.efficiency %>%"></div>
+                    </div>
+                    <span class="text-gray-900 font-semibold"><%= project.efficiency %>%</span>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+
+            <div class="flex gap-2">
+              <%= link_to "Ver Detalhes", project_path(project), class: "flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium py-2 px-4 rounded text-center transition duration-200" %>
+              <%= link_to "Editar", edit_project_path(project), class: "bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2 px-4 rounded transition duration-200" %>
+            </div>
+          </div>
+          <div class="bg-gray-50 px-6 py-3 text-xs text-gray-500">
+            Criado <%= time_ago_in_words(project.created_at) %> atrás
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
+</div>
