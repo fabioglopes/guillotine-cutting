@@ -34,6 +34,9 @@ class OptimizerService
       # Update project statistics
       update_project_stats(optimizer)
       
+      # Save optimization data for offcut generation
+      save_optimization_data(optimizer)
+      
       # Track which inventory sheets were used (but don't reserve yet - only when marked as cut)
       track_inventory_usage(optimizer) if @project.use_inventory?
 
@@ -68,8 +71,10 @@ class OptimizerService
     sheets = []
     
     if @project.use_inventory?
-      # Use inventory sheets
-      inventory_sheets = InventorySheet.available.order(:label)
+      # Use inventory sheets with matching thickness
+      inventory_sheets = InventorySheet.available
+                                       .where(thickness: @project.thickness)
+                                       .order(:label)
       inventory_sheets.each_with_index do |inv_sheet, idx|
         inv_sheet.available_quantity.times do |i|
           sheet_id = "INV#{idx + 1}.#{i + 1}"
@@ -244,6 +249,30 @@ class OptimizerService
   rescue => e
     @errors << "Error parsing STEP: #{e.message}"
     false
+  end
+
+  def save_optimization_data(optimizer)
+    # Serializar dados das sheets usadas para geração posterior de sobras
+    sheets_data = optimizer.used_sheets.map do |sheet|
+      {
+        id: sheet.id,
+        width: sheet.width,
+        height: sheet.height,
+        label: sheet.label,
+        cutting_width: sheet.cutting_width || @project.cutting_width || 3,
+        placed_pieces: sheet.placed_pieces.map do |pp|
+          {
+            x: pp[:x],
+            y: pp[:y],
+            width: pp[:piece].width,
+            height: pp[:piece].height,
+            rotated: pp[:rotated]
+          }
+        end
+      }
+    end
+    
+    @project.update(optimization_data: sheets_data.to_json)
   end
 
   def track_inventory_usage(optimizer)

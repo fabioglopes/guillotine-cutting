@@ -39,6 +39,8 @@ class GuillotineOptimizer
       placed = place_in_strips(sheet, pieces_to_place, groups, allow_rotation, cutting_width)
       
       if placed > 0
+        # Salvar cutting_width para geração de sobras
+        sheet.cutting_width = cutting_width
         @used_sheets << sheet
         puts "  Chapa #{sheet.label}: #{placed} peças colocadas (#{sheet.efficiency}% utilizada)"
       end

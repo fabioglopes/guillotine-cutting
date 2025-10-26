@@ -136,6 +136,7 @@ class ProjectsController < ApplicationController
       :allow_rotation,
       :guillotine_mode,
       :cutting_width,
+      :thickness,
       :use_inventory,
       :input_file,
       sheets_attributes: [:id, :label, :width, :height, :thickness, :quantity, :_destroy],

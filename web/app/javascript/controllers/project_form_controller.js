@@ -9,9 +9,13 @@ export default class extends Controller {
     "fileName"
   ]
 
+  static values = {
+    sheetIndex: { type: Number, default: 1000 },
+    pieceIndex: { type: Number, default: 1000 }
+  }
+
   connect() {
-    this.sheetIndex = 1000  // Start high to avoid conflicts
-    this.pieceIndex = 1000
+    console.log("ProjectFormController connected")
   }
 
   switchToUpload(event) {
@@ -38,16 +42,20 @@ export default class extends Controller {
 
   addSheet(event) {
     event.preventDefault()
-    const content = this.sheetTemplateTarget.innerHTML.replace(/NEW_SHEET_RECORD/g, this.sheetIndex)
+    console.log("Adding sheet...")
+    const content = this.sheetTemplateTarget.innerHTML.replace(/NEW_SHEET_RECORD/g, this.sheetIndexValue)
     this.sheetsContainerTarget.insertAdjacentHTML('beforeend', content)
-    this.sheetIndex++
+    this.sheetIndexValue++
+    console.log("Sheet added, new index:", this.sheetIndexValue)
   }
 
   addPiece(event) {
     event.preventDefault()
-    const content = this.pieceTemplateTarget.innerHTML.replace(/NEW_PIECE_RECORD/g, this.pieceIndex)
+    console.log("Adding piece...")
+    const content = this.pieceTemplateTarget.innerHTML.replace(/NEW_PIECE_RECORD/g, this.pieceIndexValue)
     this.piecesContainerTarget.insertAdjacentHTML('beforeend', content)
-    this.pieceIndex++
+    this.pieceIndexValue++
+    console.log("Piece added, new index:", this.pieceIndexValue)
   }
 
   removeField(event) {

@@ -10,7 +10,7 @@
     <p class="text-gray-600 mt-2">Crie um novo projeto de otimização de cortes</p>
   </div>
 
-  <div class="bg-white rounded-lg shadow-sm p-6" data-controller="project-form">
+  <div class="bg-white rounded-lg shadow-sm p-6" data-controller="project-form" data-project-form-sheet-index-value="1000" data-project-form-piece-index-value="1000">
     <%= form_with model: @project, class: "space-y-6" do |f| %>
       <!-- Errors -->
       <% if @project.errors.any? %>
@@ -41,40 +41,49 @@
             <%= f.text_area :description, rows: 3, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Descrição opcional do projeto..." %>
           </div>
 
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <%= f.label :cutting_width, "Espessura do Corte (mm)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-              <%= f.number_field :cutting_width, value: 3, min: 1, step: 0.1, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" %>
-              <p class="text-xs text-gray-500 mt-1">Espessura do corte da serra (padrão: 3mm)</p>
-            </div>
+          <div class="space-y-4">
+            <!-- Linha 1: Campos numéricos -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <%= f.label :cutting_width, "Espessura do Corte (mm)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                <%= f.number_field :cutting_width, value: 3, min: 1, step: 0.1, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" %>
+                <p class="text-xs text-gray-500 mt-1">Espessura do corte da serra (padrão: 3mm)</p>
+              </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">Permitir Rotação</label>
-              <div class="flex items-center h-10">
-                <%= f.check_box :allow_rotation, checked: true, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
-                <%= f.label :allow_rotation, "Sim, permitir rotação de peças", class: "ml-2 text-sm text-gray-700" %>
+              <div>
+                <%= f.label :thickness, "Espessura da Chapa (mm)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+                <%= f.number_field :thickness, step: 0.1, min: 0.1, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent", placeholder: "Ex: 15" %>
+                <p class="text-xs text-gray-500 mt-1">
+                  <strong>Obrigatório</strong> quando usar inventário. Filtra chapas com essa espessura.
+                </p>
               </div>
             </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">🔪 Modo de Otimização</label>
-              <div class="flex items-center h-10">
-                <%= f.check_box :guillotine_mode, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
-                <%= f.label :guillotine_mode, "Guilhotina (menos cortes, ideal para produção)", class: "ml-2 text-sm text-gray-700" %>
+            <!-- Linha 2: Checkboxes -->
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Permitir Rotação</label>
+                <div class="flex items-center h-10">
+                  <%= f.check_box :allow_rotation, checked: true, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                  <%= f.label :allow_rotation, "Sim, permitir rotação de peças", class: "ml-2 text-sm text-gray-700" %>
+                </div>
               </div>
-              <p class="text-xs text-gray-500 mt-1">Agrupa peças similares para reduzir passadas na serra</p>
-            </div>
 
-            <div>
-              <label class="block text-sm font-medium text-gray-700 mb-2">📦 Origem das Chapas</label>
-              <div class="flex items-center h-10">
-                <%= f.check_box :use_inventory, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
-                <%= f.label :use_inventory, "Usar chapas do inventário", class: "ml-2 text-sm text-gray-700" %>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">🔪 Modo de Otimização</label>
+                <div class="flex items-center h-10">
+                  <%= f.check_box :guillotine_mode, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                  <%= f.label :guillotine_mode, "Guilhotina", class: "ml-2 text-sm text-gray-700" %>
+                </div>
               </div>
-              <p class="text-xs text-gray-500 mt-1">
-                Usa automaticamente as chapas disponíveis no estoque 
-                <%= link_to "(Ver inventário)", inventory_sheets_path, class: "text-indigo-600 hover:text-indigo-800", target: "_blank" %>
-              </p>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">📦 Origem das Chapas</label>
+                <div class="flex items-center h-10">
+                  <%= f.check_box :use_inventory, class: "h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded" %>
+                  <%= f.label :use_inventory, "Usar inventário", class: "ml-2 text-sm text-gray-700" %>
+                </div>
+              </div>
             </div>
           </div>
         </div>

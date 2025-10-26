@@ -114,6 +114,12 @@
             <%= @project.guillotine_mode ? "🔪 Guilhotina" : "📐 Normal" %>
           </dd>
         </div>
+        <% if @project.thickness.present? %>
+          <div>
+            <dt class="text-gray-500">Espessura da Chapa</dt>
+            <dd class="text-gray-900 font-medium"><%= @project.thickness %>mm</dd>
+          </div>
+        <% end %>
         <div>
           <dt class="text-gray-500">Criado em</dt>
           <dd class="text-gray-900 font-medium"><%= l(@project.created_at, format: :long) %></dd>
@@ -126,10 +132,14 @@
       <% if @project.use_inventory? %>
         <h2 class="text-lg font-semibold text-gray-900 mb-4">
           📦 Chapas do Inventário 
-          <span class="text-sm font-normal text-gray-500">(Disponíveis)</span>
+          <span class="text-sm font-normal text-gray-500">
+            (<%= @project.thickness.present? ? "#{@project.thickness}mm" : "Todas" %>)
+          </span>
         </h2>
         <div class="space-y-2 text-sm max-h-48 overflow-y-auto">
-          <% InventorySheet.available.order(:label).each do |inv_sheet| %>
+          <% inventory_query = InventorySheet.available
+             inventory_query = inventory_query.where(thickness: @project.thickness) if @project.thickness.present?
+             inventory_query.order(:label).each do |inv_sheet| %>
             <div class="flex justify-between items-start p-2 bg-indigo-50 rounded border border-indigo-100">
               <div class="flex-1">
                 <p class="font-medium text-gray-900"><%= inv_sheet.label %></p>

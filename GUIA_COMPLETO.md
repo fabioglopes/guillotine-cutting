@@ -103,14 +103,17 @@ O sistema web inclui um **gerenciamento completo de estoque de chapas**, permiti
 
 1. **Criar Projeto**: Novo Projeto
 2. **Marcar**: ☑️ "Usar chapas do inventário"
-3. **Adicionar apenas peças** (chapas vêm do estoque)
-4. **Processar otimização**
+3. **Definir Espessura**: Campo "Espessura da Chapa (mm)" - **OBRIGATÓRIO**
+   - Ex: `15` para chapas de 15mm
+   - Sistema filtra **apenas chapas com essa espessura**
+4. **Adicionar apenas peças** (chapas vêm do estoque)
+5. **Processar otimização**
 
 **O que acontece:**
-- Sistema lista todas as chapas disponíveis no estoque
-- Usa automaticamente as chapas necessárias
+- Sistema lista chapas disponíveis com a espessura especificada
+- Usa automaticamente as chapas necessárias dessa espessura
 - **Rastreia** quais chapas serão usadas (mas não consome ainda)
-- Box "Chapas do Inventário" mostra todas as disponíveis em tempo real
+- Box "Chapas do Inventário (Xmm)" mostra apenas as compatíveis
 
 ### ✂️ Fluxo de Corte (Não-Destrutivo)
 
@@ -183,10 +186,12 @@ Botão: 🔄 Cancelar Corte (amarelo)
    
 2. Criar Projeto:
    - ☑️ Usar inventário
+   - Espessura: `15` mm
    - Adicionar peças
    
 3. Ver Resultado:
-   - Box mostra: "MDF 15mm Branco: 10 disponíveis"
+   - Box mostra: "Chapas do Inventário (15mm)"
+   - Lista: "MDF 15mm Branco: 10 disponíveis"
    - Otimização usa 2 chapas com 60% eficiência
    - Seção mostra: "⏳ 2 chapas reservadas"
    - Inventário continua: 10 disponíveis

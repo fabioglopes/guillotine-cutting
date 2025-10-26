@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_10_26_162528) do
+ActiveRecord::Schema[8.1].define(version: 2025_10_26_185254) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -86,10 +86,12 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_162528) do
     t.decimal "efficiency"
     t.boolean "guillotine_mode"
     t.string "name"
+    t.text "optimization_data"
     t.integer "pieces_placed"
     t.integer "pieces_total"
     t.integer "sheets_used"
     t.string "status"
+    t.decimal "thickness"
     t.datetime "updated_at", null: false
     t.boolean "use_inventory"
   end
@@ -105,6 +107,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_10_26_162528) do
     t.integer "width"
     t.index ["project_id"], name: "index_sheets_on_project_id"
   end
+
+# Could not dump table "sqlite_stat1" because of following StandardError
+#   Unknown type '' for column 'idx'
+
+
+# Could not dump table "sqlite_stat4" because of following StandardError
+#   Unknown type '' for column 'idx'
+
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"

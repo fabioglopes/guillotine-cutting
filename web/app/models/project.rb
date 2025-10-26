@@ -12,7 +12,9 @@ class Project < ApplicationRecord
 
   validates :name, presence: true
   validates :cutting_width, numericality: { greater_than: 0 }, allow_nil: true
+  validates :thickness, numericality: { greater_than: 0 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft pending processing completed error] }, allow_nil: true
+  validate :thickness_required_for_inventory, if: :use_inventory?
 
   before_validation :set_defaults, on: :create
 
@@ -85,37 +87,61 @@ class Project < ApplicationRecord
     self.status ||= 'draft'
   end
 
+  def thickness_required_for_inventory
+    if thickness.blank?
+      errors.add(:thickness, 'é obrigatória quando usar inventário')
+    end
+  end
+
   def generate_offcuts!
-    # Usar a eficiência geral do projeto
-    return unless efficiency.present? && sheets_used.present?
+    return unless optimization_data.present? && use_inventory?
     
-    waste_percentage = 100.0 - efficiency
-    return if waste_percentage < 5.0  # Só criar sobra se desperdiçou mais de 5%
+    begin
+      sheets_data = JSON.parse(optimization_data)
+    rescue JSON::ParserError
+      Rails.logger.error("Failed to parse optimization_data for project #{id}")
+      return
+    end
     
-    # Para cada chapa do inventário usada, criar uma sobra
-    project_inventory_usages.includes(:inventory_sheet).each do |usage|
-      parent = usage.inventory_sheet
+    # Para cada chapa usada, calcular sobras reais
+    sheets_data.each do |sheet_data|
+      # Encontrar a chapa pai no inventário
+      base_label = sheet_data['label'].gsub(/ #\d+$/, '')
+      parent = InventorySheet.find_by(label: base_label)
+      next unless parent
       
-      # Calcular dimensões da sobra baseado no desperdício
-      # Abordagem simplificada: reduz proporcionalmente às dimensões originais
-      # waste_percentage é a porcentagem desperdiçada do total
-      # Assumindo desperdício distribuído, usar raiz quadrada para calcular redução dimensional
-      waste_factor = Math.sqrt(waste_percentage / 100.0)
+      # Reconstruir objeto OptimizerSheet para usar método calculate_offcuts
+      sheet = OptimizerSheet.new(
+        sheet_data['id'],
+        sheet_data['width'].to_f,
+        sheet_data['height'].to_f,
+        sheet_data['label']
+      )
+      sheet.cutting_width = (sheet_data['cutting_width'] || cutting_width || 3).to_f
       
-      offcut_width = (parent.width * waste_factor).round
-      offcut_height = (parent.height * waste_factor).round
+      # Adicionar peças colocadas
+      sheet_data['placed_pieces'].each do |pp_data|
+        # Criar peça temporária
+        piece = OptimizerPiece.new(
+          'temp',
+          pp_data['width'].to_f,
+          pp_data['height'].to_f,
+          1
+        )
+        sheet.add_piece(piece, pp_data['x'].to_f, pp_data['y'].to_f, pp_data['rotated'])
+      end
       
-      # Não criar sobras muito pequenas (menos de 300mm em qualquer dimensão)
-      next if offcut_width < 300 || offcut_height < 300
+      # Calcular sobras reais desta chapa
+      offcuts = sheet.calculate_offcuts(200) # mínimo 200mm
       
-      # Criar uma sobra para cada chapa usada
-      usage.quantity_used.times do |i|
-        suffix = usage.quantity_used > 1 ? " ##{i + 1}" : ""
+      # Criar registro de inventário para cada sobra
+      offcuts.each_with_index do |offcut, index|
+        suffix = offcuts.length > 1 ? " (#{index + 1})" : ""
         
         InventorySheet.create!(
-          label: "♻️ Sobra #{parent.label}#{suffix} (~#{waste_percentage.round}%)",
-          width: offcut_width,
-          height: offcut_height,
+          label: "♻️ Sobra #{sheet_data['label']}#{suffix}",
+          width: offcut[:width],
+          height: offcut[:height],
           thickness: parent.thickness,
           material: parent.material,
           quantity: 1,

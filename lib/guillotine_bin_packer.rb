@@ -1,6 +1,8 @@
 # Implementação do algoritmo Guillotine Bin Packing
 # Ideal para cortes em marcenaria onde cortes são retos
 class GuillotineBinPacker
+  attr_reader :free_rectangles, :cutting_width
+  
   def initialize(width, height, cutting_width = 3)
     @width = width
     @height = height

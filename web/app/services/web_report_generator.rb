@@ -550,6 +550,9 @@ class WebReportGenerator
           .dimension-line { stroke: #666; stroke-width: 1; stroke-dasharray: 3,3; }
           .dimension-text { font-family: Arial, sans-serif; font-size: 18px; fill: #666; }
           .rotation-indicator { font-family: Arial, sans-serif; font-size: 26px; fill: #E91E63; }
+          .cut-line { stroke: #d32f2f; stroke-width: 2.5; stroke-dasharray: 8,4; opacity: 0.8; }
+          .cut-number { fill: #d32f2f; font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; }
+          .cut-circle { fill: white; stroke: #d32f2f; stroke-width: 2; }
         </style>
         
         <!-- Título -->
@@ -621,6 +624,9 @@ class WebReportGenerator
       end
     end
 
+    # Linhas de corte com numeração
+    svg += generate_cut_lines(sheet, padding, scale)
+
     # Estatísticas no rodapé da legenda
     legend_stats_y = padding + [sheet.placed_pieces.length * 42 + 70, height - 80].min
     if legend_stats_y > 0
@@ -631,8 +637,145 @@ class WebReportGenerator
       svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 60}\" class=\"legend-text\">Área desperdiçada: #{sheet.area - sheet.used_area}mm²</text>\n"
     end
 
+    # Desenhar sobras com medidas
+    if sheet.respond_to?(:calculate_offcuts)
+      offcuts = sheet.calculate_offcuts(200)
+      offcuts.each_with_index do |o, idx|
+        ox = padding + o[:x].to_f * scale
+        oy = padding + o[:y].to_f * scale
+        ow = o[:width].to_f * scale
+        oh = o[:height].to_f * scale
+
+        # contorno da sobra
+        svg += "\n        <!-- Sobra #{idx + 1} -->\n"
+        svg += "        <rect x=\"#{ox}\" y=\"#{oy}\" width=\"#{ow}\" height=\"#{oh}\" fill=\"none\" stroke=\"#FF9800\" stroke-width=\"2\" stroke-dasharray=\"6,4\"/>\n"
+
+        # etiqueta de medida
+        label = "#{o[:width]}×#{o[:height]}mm"
+        cx = ox + ow / 2.0
+        cy = oy + 22
+        svg += "        <text x=\"#{cx}\" y=\"#{cy}\" class=\"legend-text\" text-anchor=\"middle\" font-weight=\"bold\" fill=\"#FF9800\">#{label}</text>\n"
+      end
+    end
+
     svg += "      </svg>"
     
+    svg
+  end
+
+  def generate_cut_lines(sheet, padding, scale)
+    svg = "\n        <!-- Linhas de corte -->\n"
+    cut_number = 1
+    cutting_width = sheet.cutting_width || 3
+
+    # Agrupar peças por coluna (X)
+    strips = sheet.placed_pieces.group_by { |pp| pp[:x].to_f }.sort_by { |x, _| x }
+
+    # Calcular dimensões da área usada
+    max_bottom_y = 0
+    max_right_x = 0
+
+    strips.each do |strip_x, pieces_in_strip|
+      sorted_pieces = pieces_in_strip.sort_by { |pp| pp[:y].to_f }
+      last_piece = sorted_pieces.last
+      bottom_y = last_piece[:y].to_f + last_piece[:piece].height.to_f
+      max_bottom_y = [max_bottom_y, bottom_y].max
+
+      max_piece_width = pieces_in_strip.map { |pp| pp[:piece].width.to_f }.max
+      right_x = strip_x + max_piece_width
+      max_right_x = [max_right_x, right_x].max
+    end
+
+    # ORDEM REQUERIDA PELO USUÁRIO
+    # 1) Cortes verticais entre colunas (primeiro)
+    strips.each_with_index do |(strip_x, pieces_in_strip), index|
+      next unless index < strips.length - 1
+
+      cut_x_mm = strip_x + pieces_in_strip.map { |pp| pp[:piece].width.to_f }.max + cutting_width / 2.0
+      cut_x = padding + cut_x_mm * scale
+
+      y1 = padding
+      y2 = padding + sheet.height * scale
+
+      svg += "        <line x1=\"#{cut_x}\" y1=\"#{y1}\" x2=\"#{cut_x}\" y2=\"#{y2}\" class=\"cut-line\"/>\n"
+      svg += "        <circle cx=\"#{cut_x}\" cy=\"#{y1 - 20}\" r=\"16\" class=\"cut-circle\"/>\n"
+      svg += "        <text x=\"#{cut_x}\" y=\"#{y1 - 15}\" class=\"cut-number\" text-anchor=\"middle\">#{cut_number}º</text>\n"
+
+      cut_number += 1
+    end
+
+    # 2) Corte horizontal de colunas mais baixas (ex.: acima da P5.1)
+    strips.each do |strip_x, pieces_in_strip|
+      sorted_pieces = pieces_in_strip.sort_by { |pp| pp[:y].to_f }
+      last_piece = sorted_pieces.last
+      column_bottom_y = last_piece[:y].to_f + last_piece[:piece].height.to_f
+
+      next unless column_bottom_y < max_bottom_y - 30
+
+      x1 = padding + strip_x * scale
+      cut_y_mm = column_bottom_y + cutting_width / 2.0
+      cut_y = padding + cut_y_mm * scale
+      x2_extended = padding + sheet.width * scale
+
+      svg += "        <line x1=\"#{x1}\" y1=\"#{cut_y}\" x2=\"#{x2_extended}\" y2=\"#{cut_y}\" class=\"cut-line\"/>\n"
+      svg += "        <circle cx=\"#{x1 - 20}\" cy=\"#{cut_y}\" r=\"16\" class=\"cut-circle\"/>\n"
+      svg += "        <text x=\"#{x1 - 20}\" y=\"#{cut_y + 6}\" class=\"cut-number\" text-anchor=\"middle\">#{cut_number}º</text>\n"
+
+      cut_number += 1
+    end
+
+    # 3) Cortes horizontais internos (entre peças)
+    strips.each do |strip_x, pieces_in_strip|
+      sorted_pieces = pieces_in_strip.sort_by { |pp| pp[:y].to_f }
+      next unless sorted_pieces.length > 1
+
+      x1 = padding + strip_x * scale
+      strip_width = pieces_in_strip.map { |p| p[:piece].width.to_f }.max * scale
+      x2 = x1 + strip_width
+
+      sorted_pieces.each_with_index do |pp, piece_index|
+        next unless piece_index < sorted_pieces.length - 1
+
+        cut_y_mm = pp[:y].to_f + pp[:piece].height.to_f + cutting_width / 2.0
+        cut_y = padding + cut_y_mm * scale
+
+        svg += "        <line x1=\"#{x1}\" y1=\"#{cut_y}\" x2=\"#{x2}\" y2=\"#{cut_y}\" class=\"cut-line\"/>\n"
+        svg += "        <circle cx=\"#{x1 - 20}\" cy=\"#{cut_y}\" r=\"16\" class=\"cut-circle\"/>\n"
+        svg += "        <text x=\"#{x1 - 20}\" y=\"#{cut_y + 6}\" class=\"cut-number\" text-anchor=\"middle\">#{cut_number}º</text>\n"
+
+        cut_number += 1
+      end
+    end
+
+    # 4) Corte horizontal global (separar sobra inferior) – vem depois
+    if max_bottom_y + cutting_width < sheet.height - 50
+      cut_y_mm = max_bottom_y + cutting_width / 2.0
+      cut_y = padding + cut_y_mm * scale
+      x1 = padding
+      x2 = padding + sheet.width * scale
+
+      svg += "        <line x1=\"#{x1}\" y1=\"#{cut_y}\" x2=\"#{x2}\" y2=\"#{cut_y}\" class=\"cut-line\"/>\n"
+      svg += "        <circle cx=\"#{x1 - 20}\" cy=\"#{cut_y}\" r=\"16\" class=\"cut-circle\"/>\n"
+      svg += "        <text x=\"#{x1 - 20}\" y=\"#{cut_y + 6}\" class=\"cut-number\" text-anchor=\"middle\">#{cut_number}º</text>\n"
+
+      cut_number += 1
+    end
+
+    # 5) Corte vertical à direita (sobra direita)
+    if max_right_x + cutting_width < sheet.width - 200
+      cut_x_mm = max_right_x + cutting_width / 2.0
+      cut_x = padding + cut_x_mm * scale
+
+      y1 = padding
+      y2 = padding + sheet.height * scale
+
+      svg += "        <line x1=\"#{cut_x}\" y1=\"#{y1}\" x2=\"#{cut_x}\" y2=\"#{y2}\" class=\"cut-line\"/>\n"
+      svg += "        <circle cx=\"#{cut_x}\" cy=\"#{y1 - 20}\" r=\"16\" class=\"cut-circle\"/>\n"
+      svg += "        <text x=\"#{cut_x}\" y=\"#{y1 - 15}\" class=\"cut-number\" text-anchor=\"middle\">#{cut_number}º</text>\n"
+
+      cut_number += 1
+    end
+
     svg
   end
 
