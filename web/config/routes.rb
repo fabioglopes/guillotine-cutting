@@ -18,6 +18,8 @@ Rails.application.routes.draw do
       post :optimize
       post :mark_cut_completed
       post :unmark_cut_completed
+      get :interactive_layout
+      post :save_interactive_layout
       get 'download/*filename', to: 'projects#download_results', as: :download_file, format: false
     end
   end

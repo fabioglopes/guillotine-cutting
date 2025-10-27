@@ -123,6 +123,74 @@ class ProjectsController < ApplicationController
     end
   end
 
+  def interactive_layout
+    @project = Project.find(params[:id])
+    render :interactive_layout
+  end
+
+  def save_interactive_layout
+    @project = Project.find(params[:id])
+    
+    begin
+      layout_data = JSON.parse(request.body.read)
+      
+      # Create a new optimization result with the interactive layout
+      pieces_data = layout_data['pieces'].map do |piece_data|
+        {
+          id: piece_data['id'],
+          x: piece_data['x'].to_f,
+          y: piece_data['y'].to_f,
+          width: piece_data['width'].to_f,
+          height: piece_data['height'].to_f,
+          rotated: false
+        }
+      end
+      
+      # Calculate waste areas
+      sheet_width = layout_data['sheet_width'].to_f
+      sheet_height = layout_data['sheet_height'].to_f
+      cutting_width = layout_data['cutting_width'].to_f
+      
+      # Find largest waste area (right side)
+      rightmost_edge = pieces_data.map { |p| p[:x] + p[:width] }.max
+      largest_waste_width = sheet_width - rightmost_edge
+      largest_waste_height = sheet_height
+      largest_waste_area = largest_waste_width * largest_waste_height
+      
+      # Create optimization data
+      optimization_data = {
+        sheets: [{
+          id: @project.sheets.first&.id || 1,
+          width: sheet_width,
+          height: sheet_height,
+          pieces: pieces_data,
+          waste_areas: [{
+            x: rightmost_edge,
+            y: 0,
+            width: largest_waste_width,
+            height: largest_waste_height,
+            area: largest_waste_area
+          }]
+        }],
+        total_pieces: pieces_data.length,
+        total_waste_area: largest_waste_area,
+        utilization: ((pieces_data.sum { |p| p[:width] * p[:height] }) / (sheet_width * sheet_height) * 100).round(2)
+      }
+      
+      # Update project with interactive layout
+      @project.update!(
+        optimization_data: optimization_data.to_json,
+        status: 'optimized'
+      )
+      
+      render json: { success: true, message: 'Layout interativo salvo com sucesso!' }
+      
+    rescue => e
+      Rails.logger.error "Error saving interactive layout: #{e.message}"
+      render json: { success: false, error: e.message }
+    end
+  end
+
   private
 
   def set_project

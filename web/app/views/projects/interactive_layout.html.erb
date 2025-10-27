@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout Interativo - <%= @project.name %></title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header p {
+            margin: 5px 0 0 0;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .workspace {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+            background: #fafafa;
+        }
+        
+        .sheet {
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            border: 3px solid #333;
+            background: white;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .piece {
+            position: absolute;
+            border: 2px solid #333;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+            user-select: none;
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .piece:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            z-index: 10;
+        }
+        
+        .piece.dragging {
+            z-index: 100;
+            transform: rotate(2deg);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        .piece.snap-preview {
+            opacity: 0.7;
+            border: 2px dashed #007bff;
+        }
+        
+        .cut-line {
+            position: absolute;
+            background: #ff4757;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .cut-line.horizontal {
+            height: 2px;
+            width: 100%;
+        }
+        
+        .cut-line.vertical {
+            width: 2px;
+            height: 100%;
+        }
+        
+        .cut-number {
+            position: absolute;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            z-index: 6;
+        }
+        
+        .snap-indicator {
+            position: absolute;
+            background: rgba(0, 123, 255, 0.3);
+            border: 2px solid #007bff;
+            pointer-events: none;
+            z-index: 15;
+        }
+        
+        .piece.p1 { background: linear-gradient(45deg, #4CAF50, #45a049); }
+        .piece.p2 { background: linear-gradient(45deg, #2196F3, #1976D2); }
+        .piece.p3 { background: linear-gradient(45deg, #FF9800, #F57C00); }
+        .piece.p4 { background: linear-gradient(45deg, #E91E63, #C2185B); }
+        .piece.p5 { background: linear-gradient(45deg, #9C27B0, #7B1FA2); }
+        
+        .waste-area {
+            position: absolute;
+            border: 2px dashed #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            pointer-events: none;
+        }
+        
+        .waste-area.largest {
+            border-color: #ff4757;
+            background: rgba(255, 71, 87, 0.15);
+            border-width: 3px;
+        }
+        
+        .waste-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 71, 87, 0.9);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-align: center;
+            min-width: 80px;
+        }
+        
+        .sidebar {
+            width: 300px;
+            background: #f8f9fa;
+            border-left: 1px solid #dee2e6;
+            padding: 20px;
+        }
+        
+        .piece-list {
+            margin-bottom: 20px;
+        }
+        
+        .piece-list h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .piece-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .piece-item:hover {
+            background: #e9ecef;
+            transform: translateX(2px);
+        }
+        
+        .piece-preview {
+            width: 30px;
+            height: 20px;
+            margin-right: 10px;
+            border-radius: 3px;
+        }
+        
+        .piece-info {
+            flex: 1;
+        }
+        
+        .piece-name {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .piece-dimensions {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        .controls {
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: background 0.2s ease;
+        }
+        
+        .btn:hover {
+            background: #0056b3;
+        }
+        
+        .btn.secondary {
+            background: #6c757d;
+        }
+        
+        .btn.secondary:hover {
+            background: #545b62;
+        }
+        
+        .btn.success {
+            background: #28a745;
+        }
+        
+        .btn.success:hover {
+            background: #1e7e34;
+        }
+        
+        .stats {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .stats h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+        
+        .stat-label {
+            color: #666;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .largest-waste {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 8px;
+            margin-top: 10px;
+        }
+        
+        .largest-waste .stat-value {
+            color: #856404;
+        }
+        
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+        
+        .grid-line {
+            position: absolute;
+            background: #ccc;
+        }
+        
+        .grid-line.vertical {
+            width: 1px;
+            height: 100%;
+        }
+        
+        .grid-line.horizontal {
+            height: 1px;
+            width: 100%;
+        }
+        
+        .instructions {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .instructions h4 {
+            margin: 0 0 10px 0;
+            color: #0066cc;
+        }
+        
+        .instructions ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 5px;
+            font-size: 13px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Layout Interativo</h1>
+            <p><%= @project.name %> - Posicione as peças para maximizar a sobra contígua</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="workspace">
+                <div class="sheet" id="sheet">
+                    <div class="grid-overlay" id="gridOverlay"></div>
+                    <!-- Pieces will be dynamically added here -->
+                </div>
+            </div>
+            
+            <div class="sidebar">
+                <div class="instructions">
+                    <h4>📋 Instruções</h4>
+                    <ul>
+                        <li>Arraste as peças para posicioná-las</li>
+                        <li>Peças fazem snap automático na grade de 10mm</li>
+                        <li>Snap inteligente: peças "grudam" nas bordas de outras peças</li>
+                        <li>Peças não podem sobrepor (vermelho = inválido)</li>
+                        <li>Linhas de corte aparecem automaticamente</li>
+                        <li>Use "Snap Grid" para alinhar todas as peças</li>
+                        <li>Use "Otimizar" para sugestão automática</li>
+                        <li>Use "Salvar" para aplicar o layout</li>
+                    </ul>
+                </div>
+                
+                <div class="piece-list">
+                    <h3>🧩 Peças Disponíveis</h3>
+                    <div id="pieceList">
+                        <!-- Pieces will be dynamically added here -->
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button class="btn" onclick="resetLayout()">🔄 Resetar</button>
+                    <button class="btn secondary" onclick="optimizeLayout()">🤖 Otimizar</button>
+                    <button class="btn secondary" onclick="snapAllToGrid()">📐 Snap Grid</button>
+                    <button class="btn success" onclick="saveLayout()">💾 Salvar Layout</button>
+                </div>
+                
+                <div class="stats">
+                    <h4>📊 Estatísticas</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">Peças colocadas:</span>
+                        <span class="stat-value" id="piecesPlaced">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Área utilizada:</span>
+                        <span class="stat-value" id="areaUsed">0 m²</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Área desperdiçada:</span>
+                        <span class="stat-value" id="areaWasted">0 m²</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Aproveitamento:</span>
+                        <span class="stat-value" id="utilization">0%</span>
+                    </div>
+                    
+                    <div class="largest-waste">
+                        <div class="stat-item">
+                            <span class="stat-label">Maior sobra:</span>
+                            <span class="stat-value" id="largestWaste">0 m²</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const SHEET_WIDTH = <%= @project.sheets.first&.width || 1280 %>;
+        const SHEET_HEIGHT = <%= @project.sheets.first&.height || 1830 %>;
+        const CUTTING_WIDTH = 3;
+        const SNAP_GRID_SIZE = 10; // Snap to 10mm grid
+        const SNAP_DISTANCE = 20; // Snap to pieces within 20mm
+        
+        // Scale factor to fit sheet in workspace
+        const SCALE = Math.min(800 / SHEET_WIDTH, 600 / SHEET_HEIGHT);
+        const SCALED_WIDTH = SHEET_WIDTH * SCALE;
+        const SCALED_HEIGHT = SHEET_HEIGHT * SCALE;
+        
+        // Pieces data
+        const pieces = [
+            <% @project.pieces.each_with_index do |piece, index| %>
+            {
+                id: '<%= piece.id %>',
+                name: '<%= piece.label %>',
+                width: <%= piece.width %>,
+                height: <%= piece.height %>,
+                color: 'p<%= index + 1 %>',
+                placed: false,
+                x: 0,
+                y: 0
+            }<%= ',' unless index == @project.pieces.length - 1 %>
+            <% end %>
+        ];
+        
+        let draggedPiece = null;
+        let dragOffset = { x: 0, y: 0 };
+        
+        // Initialize the application
+        function init() {
+            setupSheet();
+            createGrid();
+            renderPieces();
+            updateStats();
+        }
+        
+        function setupSheet() {
+            const sheet = document.getElementById('sheet');
+            sheet.style.width = SCALED_WIDTH + 'px';
+            sheet.style.height = SCALED_HEIGHT + 'px';
+        }
+        
+        function createGrid() {
+            const gridOverlay = document.getElementById('gridOverlay');
+            gridOverlay.innerHTML = '';
+            
+            // Create vertical grid lines every 50mm
+            for (let x = 0; x <= SHEET_WIDTH; x += 50) {
+                const line = document.createElement('div');
+                line.className = 'grid-line vertical';
+                line.style.left = (x * SCALE) + 'px';
+                gridOverlay.appendChild(line);
+            }
+            
+            // Create horizontal grid lines every 50mm
+            for (let y = 0; y <= SHEET_HEIGHT; y += 50) {
+                const line = document.createElement('div');
+                line.className = 'grid-line horizontal';
+                line.style.top = (y * SCALE) + 'px';
+                gridOverlay.appendChild(line);
+            }
+        }
+        
+        function renderPieces() {
+            const sheet = document.getElementById('sheet');
+            const pieceList = document.getElementById('pieceList');
+            
+            // Clear existing pieces
+            sheet.querySelectorAll('.piece').forEach(p => p.remove());
+            pieceList.innerHTML = '';
+            
+            pieces.forEach((piece, index) => {
+                // Create piece in workspace
+                if (piece.placed) {
+                    const pieceElement = createPieceElement(piece, index);
+                    sheet.appendChild(pieceElement);
+                }
+                
+                // Create piece in sidebar
+                const pieceItem = createPieceListItem(piece, index);
+                pieceList.appendChild(pieceItem);
+            });
+        }
+        
+        function createPieceElement(piece, index) {
+            const element = document.createElement('div');
+            element.className = `piece ${piece.color}`;
+            element.id = `piece-${index}`;
+            
+            const scaledWidth = piece.width * SCALE;
+            const scaledHeight = piece.height * SCALE;
+            
+            element.style.width = scaledWidth + 'px';
+            element.style.height = scaledHeight + 'px';
+            element.style.left = (piece.x * SCALE) + 'px';
+            element.style.top = (piece.y * SCALE) + 'px';
+            
+            element.innerHTML = `
+                <div style="text-align: center;">
+                    <div>${piece.name}</div>
+                    <div style="font-size: 10px;">${piece.width}×${piece.height}</div>
+                </div>
+            `;
+            
+            // Add drag functionality
+            element.addEventListener('mousedown', (e) => startDrag(e, index));
+            
+            return element;
+        }
+        
+        function createPieceListItem(piece, index) {
+            const item = document.createElement('div');
+            item.className = 'piece-item';
+            item.innerHTML = `
+                <div class="piece-preview ${piece.color}"></div>
+                <div class="piece-info">
+                    <div class="piece-name">${piece.name}</div>
+                    <div class="piece-dimensions">${piece.width}×${piece.height}mm</div>
+                </div>
+            `;
+            
+            item.addEventListener('click', () => {
+                if (!piece.placed) {
+                    placePiece(index);
+                } else {
+                    removePiece(index);
+                }
+            });
+            
+            return item;
+        }
+        
+        function placePiece(index) {
+            const piece = pieces[index];
+            piece.placed = true;
+            piece.x = 10; // Start position
+            piece.y = 10;
+            renderPieces();
+            updateStats();
+        }
+        
+        function removePiece(index) {
+            pieces[index].placed = false;
+            renderPieces();
+            updateStats();
+        }
+        
+        function startDrag(e, index) {
+            e.preventDefault();
+            draggedPiece = index;
+            
+            const piece = pieces[index];
+            const rect = e.target.getBoundingClientRect();
+            const sheetRect = document.getElementById('sheet').getBoundingClientRect();
+            
+            dragOffset.x = e.clientX - rect.left;
+            dragOffset.y = e.clientY - rect.top;
+            
+            e.target.classList.add('dragging');
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', endDrag);
+        }
+        
+        function drag(e) {
+            if (draggedPiece === null) return;
+            
+            const sheet = document.getElementById('sheet');
+            const sheetRect = sheet.getBoundingClientRect();
+            
+            const newX = (e.clientX - sheetRect.left - dragOffset.x) / SCALE;
+            const newY = (e.clientY - sheetRect.top - dragOffset.y) / SCALE;
+            
+            // First try smart snapping to other pieces
+            const smartSnap = findSmartSnapPosition(draggedPiece, newX, newY);
+            let finalX = smartSnap ? smartSnap.x : newX;
+            let finalY = smartSnap ? smartSnap.y : newY;
+            
+            // If no smart snap, snap to grid
+            if (!smartSnap) {
+                finalX = Math.round(finalX / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+                finalY = Math.round(finalY / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+            }
+            
+            // Constrain to sheet boundaries
+            const piece = pieces[draggedPiece];
+            const constrainedX = Math.max(0, Math.min(finalX, SHEET_WIDTH - piece.width));
+            const constrainedY = Math.max(0, Math.min(finalY, SHEET_HEIGHT - piece.height));
+            
+            // Check for collisions
+            const isValidPosition = isValidPiecePosition(draggedPiece, constrainedX, constrainedY);
+            
+            // Update piece position
+            piece.x = constrainedX;
+            piece.y = constrainedY;
+            
+            const element = document.getElementById(`piece-${draggedPiece}`);
+            element.style.left = (constrainedX * SCALE) + 'px';
+            element.style.top = (constrainedY * SCALE) + 'px';
+            
+            // Visual feedback for valid/invalid position
+            element.classList.toggle('invalid-position', !isValidPosition);
+            element.classList.toggle('snap-preview', isValidPosition && smartSnap);
+            
+            // Show snap indicator if smart snapping
+            updateSnapIndicator(smartSnap);
+            
+            updateStats();
+        }
+        
+        function endDrag() {
+            if (draggedPiece !== null) {
+                const element = document.getElementById(`piece-${draggedPiece}`);
+                element.classList.remove('dragging');
+                element.classList.remove('snap-preview');
+                element.classList.remove('invalid-position');
+                
+                // Remove snap indicator
+                const snapIndicator = document.querySelector('.snap-indicator');
+                if (snapIndicator) {
+                    snapIndicator.remove();
+                }
+                
+                // If position is invalid, revert to last valid position
+                const piece = pieces[draggedPiece];
+                if (!isValidPiecePosition(draggedPiece, piece.x, piece.y)) {
+                    // Find nearest valid position
+                    const validPosition = findNearestValidPosition(draggedPiece, piece.x, piece.y);
+                    if (validPosition) {
+                        piece.x = validPosition.x;
+                        piece.y = validPosition.y;
+                        element.style.left = (validPosition.x * SCALE) + 'px';
+                        element.style.top = (validPosition.y * SCALE) + 'px';
+                    }
+                }
+                
+                draggedPiece = null;
+            }
+            
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', endDrag);
+        }
+        
+        function findSmartSnapPosition(pieceIndex, targetX, targetY) {
+            const piece = pieces[pieceIndex];
+            const snapPositions = [];
+            
+            // Check all other placed pieces
+            for (let i = 0; i < pieces.length; i++) {
+                if (i === pieceIndex || !pieces[i].placed) continue;
+                
+                const otherPiece = pieces[i];
+                
+                // Calculate all possible snap positions relative to other piece
+                const snapOptions = [
+                    // Left side of other piece
+                    { x: otherPiece.x - piece.width - CUTTING_WIDTH, y: otherPiece.y },
+                    // Right side of other piece  
+                    { x: otherPiece.x + otherPiece.width + CUTTING_WIDTH, y: otherPiece.y },
+                    // Top side of other piece
+                    { x: otherPiece.x, y: otherPiece.y - piece.height - CUTTING_WIDTH },
+                    // Bottom side of other piece
+                    { x: otherPiece.x, y: otherPiece.y + otherPiece.height + CUTTING_WIDTH },
+                    // Align left edges
+                    { x: otherPiece.x, y: otherPiece.y },
+                    // Align right edges
+                    { x: otherPiece.x + otherPiece.width - piece.width, y: otherPiece.y },
+                    // Align top edges
+                    { x: otherPiece.x, y: otherPiece.y },
+                    // Align bottom edges
+                    { x: otherPiece.x, y: otherPiece.y + otherPiece.height - piece.height }
+                ];
+                
+                snapOptions.forEach(snapPos => {
+                    const distance = Math.sqrt(
+                        Math.pow(targetX - snapPos.x, 2) + Math.pow(targetY - snapPos.y, 2)
+                    );
+                    
+                    if (distance <= SNAP_DISTANCE) {
+                        snapPositions.push({
+                            x: snapPos.x,
+                            y: snapPos.y,
+                            distance: distance
+                        });
+                    }
+                });
+            }
+            
+            // Return closest snap position
+            if (snapPositions.length > 0) {
+                snapPositions.sort((a, b) => a.distance - b.distance);
+                return snapPositions[0];
+            }
+            
+            return null;
+        }
+        
+        function updateSnapIndicator(smartSnap) {
+            // Remove existing snap indicator
+            const existingIndicator = document.querySelector('.snap-indicator');
+            if (existingIndicator) {
+                existingIndicator.remove();
+            }
+            
+            if (smartSnap && draggedPiece !== null) {
+                const piece = pieces[draggedPiece];
+                const indicator = document.createElement('div');
+                indicator.className = 'snap-indicator';
+                indicator.style.left = (smartSnap.x * SCALE) + 'px';
+                indicator.style.top = (smartSnap.y * SCALE) + 'px';
+                indicator.style.width = (piece.width * SCALE) + 'px';
+                indicator.style.height = (piece.height * SCALE) + 'px';
+                
+                document.getElementById('sheet').appendChild(indicator);
+            }
+        }
+        
+        function generateCutLines() {
+            // Remove existing cut lines
+            document.querySelectorAll('.cut-line, .cut-number').forEach(line => line.remove());
+            
+            const placedPieces = pieces.filter(p => p.placed);
+            if (placedPieces.length === 0) return;
+            
+            const cutLines = [];
+            let cutNumber = 1;
+            
+            // Generate horizontal cut lines
+            const horizontalCuts = new Set();
+            placedPieces.forEach(piece => {
+                // Cut below piece
+                horizontalCuts.add(piece.y + piece.height);
+            });
+            
+            horizontalCuts.forEach(y => {
+                const cutLine = document.createElement('div');
+                cutLine.className = 'cut-line horizontal';
+                cutLine.style.left = '0px';
+                cutLine.style.top = (y * SCALE) + 'px';
+                cutLine.style.width = (SHEET_WIDTH * SCALE) + 'px';
+                
+                const cutNumberEl = document.createElement('div');
+                cutNumberEl.className = 'cut-number';
+                cutNumberEl.textContent = cutNumber++;
+                cutNumberEl.style.left = '10px';
+                cutNumberEl.style.top = (y * SCALE - 10) + 'px';
+                
+                document.getElementById('sheet').appendChild(cutLine);
+                document.getElementById('sheet').appendChild(cutNumberEl);
+            });
+            
+            // Generate vertical cut lines
+            const verticalCuts = new Set();
+            placedPieces.forEach(piece => {
+                // Cut to right of piece
+                verticalCuts.add(piece.x + piece.width);
+            });
+            
+            verticalCuts.forEach(x => {
+                const cutLine = document.createElement('div');
+                cutLine.className = 'cut-line vertical';
+                cutLine.style.left = (x * SCALE) + 'px';
+                cutLine.style.top = '0px';
+                cutLine.style.height = (SHEET_HEIGHT * SCALE) + 'px';
+                
+                const cutNumberEl = document.createElement('div');
+                cutNumberEl.className = 'cut-number';
+                cutNumberEl.textContent = cutNumber++;
+                cutNumberEl.style.left = (x * SCALE - 10) + 'px';
+                cutNumberEl.style.top = '10px';
+                
+                document.getElementById('sheet').appendChild(cutLine);
+                document.getElementById('sheet').appendChild(cutNumberEl);
+            });
+        }
+        
+        function isValidPiecePosition(pieceIndex, x, y) {
+            const piece = pieces[pieceIndex];
+            if (!piece.placed) return true;
+            
+            // Check sheet boundaries
+            if (x < 0 || y < 0 || x + piece.width > SHEET_WIDTH || y + piece.height > SHEET_HEIGHT) {
+                return false;
+            }
+            
+            // Check collision with other pieces
+            for (let i = 0; i < pieces.length; i++) {
+                if (i === pieceIndex || !pieces[i].placed) continue;
+                
+                const otherPiece = pieces[i];
+                
+                // Check if pieces overlap (with cutting width buffer)
+                const buffer = CUTTING_WIDTH;
+                if (!(x + piece.width + buffer <= otherPiece.x || 
+                      otherPiece.x + otherPiece.width + buffer <= x ||
+                      y + piece.height + buffer <= otherPiece.y ||
+                      otherPiece.y + otherPiece.height + buffer <= y)) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+        
+        function findNearestValidPosition(pieceIndex, targetX, targetY) {
+            const piece = pieces[pieceIndex];
+            const maxAttempts = 50;
+            const stepSize = SNAP_GRID_SIZE;
+            
+            // Try positions in expanding spiral from target
+            for (let radius = 0; radius < maxAttempts; radius++) {
+                for (let angle = 0; angle < 8; angle++) {
+                    const offsetX = Math.round(Math.cos(angle * Math.PI / 4) * radius * stepSize);
+                    const offsetY = Math.round(Math.sin(angle * Math.PI / 4) * radius * stepSize);
+                    
+                    const testX = Math.max(0, Math.min(targetX + offsetX, SHEET_WIDTH - piece.width));
+                    const testY = Math.max(0, Math.min(targetY + offsetY, SHEET_HEIGHT - piece.height));
+                    
+                    // Snap to grid
+                    const snappedX = Math.round(testX / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+                    const snappedY = Math.round(testY / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+                    
+                    if (isValidPiecePosition(pieceIndex, snappedX, snappedY)) {
+                        return { x: snappedX, y: snappedY };
+                    }
+                }
+            }
+            
+            return null;
+        }
+        
+        function snapPieceToGrid(pieceIndex) {
+            const piece = pieces[pieceIndex];
+            if (!piece.placed) return;
+            
+            const snappedX = Math.round(piece.x / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+            const snappedY = Math.round(piece.y / SNAP_GRID_SIZE) * SNAP_GRID_SIZE;
+            
+            // Constrain to sheet boundaries
+            const constrainedX = Math.max(0, Math.min(snappedX, SHEET_WIDTH - piece.width));
+            const constrainedY = Math.max(0, Math.min(snappedY, SHEET_HEIGHT - piece.height));
+            
+            piece.x = constrainedX;
+            piece.y = constrainedY;
+            
+            const element = document.getElementById(`piece-${pieceIndex}`);
+            if (element) {
+                element.style.left = (constrainedX * SCALE) + 'px';
+                element.style.top = (constrainedY * SCALE) + 'px';
+            }
+        }
+        
+        function updateStats() {
+            const placedPieces = pieces.filter(p => p.placed);
+            const totalArea = SHEET_WIDTH * SHEET_HEIGHT;
+            const usedArea = placedPieces.reduce((sum, p) => sum + (p.width * p.height), 0);
+            const wastedArea = totalArea - usedArea;
+            const utilization = (usedArea / totalArea * 100).toFixed(2);
+            
+            // Calculate largest waste area
+            const largestWaste = calculateLargestWasteArea();
+            
+            document.getElementById('piecesPlaced').textContent = placedPieces.length;
+            document.getElementById('areaUsed').textContent = (usedArea / 1000000).toFixed(2) + ' m²';
+            document.getElementById('areaWasted').textContent = (wastedArea / 1000000).toFixed(2) + ' m²';
+            document.getElementById('utilization').textContent = utilization + '%';
+            document.getElementById('largestWaste').textContent = (largestWaste / 1000000).toFixed(2) + ' m²';
+            
+            // Update waste areas visualization
+            updateWasteAreas();
+            
+            // Generate cut lines
+            generateCutLines();
+        }
+        
+        function calculateLargestWasteArea() {
+            // Simple algorithm to find largest rectangular waste area
+            const placedPieces = pieces.filter(p => p.placed);
+            
+            if (placedPieces.length === 0) {
+                return SHEET_WIDTH * SHEET_HEIGHT;
+            }
+            
+            // Find the rightmost edge of placed pieces
+            const rightmostEdge = Math.max(...placedPieces.map(p => p.x + p.width));
+            
+            // Calculate the area to the right of all pieces
+            const rightWasteWidth = SHEET_WIDTH - rightmostEdge;
+            const rightWasteArea = rightWasteWidth * SHEET_HEIGHT;
+            
+            return Math.max(0, rightWasteArea);
+        }
+        
+        function updateWasteAreas() {
+            // Remove existing waste areas
+            document.querySelectorAll('.waste-area').forEach(area => area.remove());
+            
+            const placedPieces = pieces.filter(p => p.placed);
+            if (placedPieces.length === 0) return;
+            
+            // Find the rightmost edge
+            const rightmostEdge = Math.max(...placedPieces.map(p => p.x + p.width));
+            
+            if (rightmostEdge < SHEET_WIDTH) {
+                const wasteArea = document.createElement('div');
+                wasteArea.className = 'waste-area largest';
+                wasteArea.style.left = (rightmostEdge * SCALE) + 'px';
+                wasteArea.style.top = '0px';
+                wasteArea.style.width = ((SHEET_WIDTH - rightmostEdge) * SCALE) + 'px';
+                wasteArea.style.height = (SHEET_HEIGHT * SCALE) + 'px';
+                
+                const label = document.createElement('div');
+                label.className = 'waste-label';
+                label.textContent = `${Math.round(SHEET_WIDTH - rightmostEdge)}×${SHEET_HEIGHT}mm\n${((SHEET_WIDTH - rightmostEdge) * SHEET_HEIGHT / 1000000).toFixed(2)}m²`;
+                wasteArea.appendChild(label);
+                
+                document.getElementById('sheet').appendChild(wasteArea);
+            }
+        }
+        
+        function resetLayout() {
+            pieces.forEach(piece => {
+                piece.placed = false;
+                piece.x = 0;
+                piece.y = 0;
+            });
+            renderPieces();
+            updateStats();
+        }
+        
+        function optimizeLayout() {
+            // Simple optimization: place pieces in a compact arrangement
+            resetLayout();
+            
+            // Place pieces in rows with snap-to-grid
+            let currentX = 0;
+            let currentY = 0;
+            let maxHeightInRow = 0;
+            
+            pieces.forEach((piece, index) => {
+                // Check if piece fits in current row
+                if (currentX + piece.width > SHEET_WIDTH) {
+                    // Move to next row
+                    currentX = 0;
+                    currentY += maxHeightInRow + CUTTING_WIDTH;
+                    maxHeightInRow = 0;
+                }
+                
+                piece.placed = true;
+                piece.x = currentX;
+                piece.y = currentY;
+                
+                // Snap to grid
+                snapPieceToGrid(index);
+                
+                currentX += piece.width + CUTTING_WIDTH;
+                maxHeightInRow = Math.max(maxHeightInRow, piece.height);
+            });
+            
+            renderPieces();
+            updateStats();
+        }
+        
+        function snapAllToGrid() {
+            pieces.forEach((piece, index) => {
+                if (piece.placed) {
+                    snapPieceToGrid(index);
+                }
+            });
+            renderPieces();
+            updateStats();
+        }
+        
+        function saveLayout() {
+            const placedPieces = pieces.filter(p => p.placed);
+            
+            if (placedPieces.length === 0) {
+                alert('Coloque pelo menos uma peça antes de salvar!');
+                return;
+            }
+            
+            // Create layout data
+            const layoutData = {
+                pieces: placedPieces.map(piece => ({
+                    id: piece.id,
+                    x: piece.x,
+                    y: piece.y,
+                    width: piece.width,
+                    height: piece.height
+                })),
+                sheet_width: SHEET_WIDTH,
+                sheet_height: SHEET_HEIGHT,
+                cutting_width: CUTTING_WIDTH
+            };
+            
+            // Send to server
+            fetch('<%= project_path(@project) %>/save_interactive_layout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify(layoutData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Layout salvo com sucesso!');
+                    window.location.href = '<%= project_path(@project) %>';
+                } else {
+                    alert('Erro ao salvar layout: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Erro ao salvar layout');
+            });
+        }
+        
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
