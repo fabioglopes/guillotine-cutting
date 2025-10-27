@@ -30,8 +30,8 @@ class ReportGenerator
     @optimizer.used_sheets.each do |sheet|
       puts "\n--- #{sheet.label.upcase} ---"
       puts "Dimensões: #{sheet.width}x#{sheet.height}mm"
-      puts "Área total: #{sheet.area}mm²"
-      puts "Área utilizada: #{sheet.used_area}mm² (#{sheet.efficiency}%)"
+      puts "Área total: #{format_area_m2(sheet.area)}"
+      puts "Área utilizada: #{format_area_m2(sheet.used_area)} (#{sheet.efficiency}%)"
       puts "Peças cortadas: #{sheet.placed_pieces.length}"
       puts "\nPeças nesta chapa:"
       
@@ -255,6 +255,27 @@ class ReportGenerator
       '#FF9800', '#9E9E9E', '#3F51B5', '#F44336', '#CDDC39'
     ]
     
+    offcuts = []
+    largest_offcut_label = "Nenhuma"
+    largest_offcut_area_text = "0.00 m²"
+
+    if sheet.respond_to?(:calculate_offcuts)
+      offcuts = sheet.calculate_offcuts(200)
+      largest_offcut = offcuts.max_by do |o|
+        area = o[:area_mm2] ? o[:area_mm2].to_f : 0.0
+        area = o[:width].to_f * o[:height].to_f if area <= 0
+        area
+      end
+
+      if largest_offcut
+        largest_offcut_area_mm2 = largest_offcut[:area_mm2] ? largest_offcut[:area_mm2].to_f : 0.0
+        largest_offcut_area_mm2 = largest_offcut[:width].to_f * largest_offcut[:height].to_f if largest_offcut_area_mm2 <= 0
+        largest_offcut_area_text = format_area_m2(largest_offcut_area_mm2)
+        base_label = "#{largest_offcut[:width]}×#{largest_offcut[:height]}mm"
+        largest_offcut_label = largest_offcut[:description] ? "#{largest_offcut[:description]} (#{base_label})" : base_label
+      end
+    end
+
     # Legenda
     svg += "\n        <!-- Legenda -->\n"
     svg += "        <rect x=\"#{padding + width + 40}\" y=\"#{padding}\" width=\"#{legend_width - 60}\" height=\"#{[sheet.placed_pieces.length * 35 + 40, height].min}\" fill=\"#fafafa\" stroke=\"#ccc\" stroke-width=\"1\" rx=\"5\"/>\n"
@@ -309,8 +330,9 @@ class ReportGenerator
       svg += "\n        <!-- Estatísticas -->\n"
       svg += "        <line x1=\"#{padding + width + 55}\" y1=\"#{legend_stats_y}\" x2=\"#{padding + width + legend_width - 75}\" y2=\"#{legend_stats_y}\" stroke=\"#ccc\" stroke-width=\"1\"/>\n"
       svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 20}\" class=\"legend-text\" font-weight=\"bold\">Total de peças: #{sheet.placed_pieces.length}</text>\n"
-      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 35}\" class=\"legend-text\">Área utilizada: #{sheet.used_area}mm²</text>\n"
-      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 50}\" class=\"legend-text\">Área desperdiçada: #{sheet.area - sheet.used_area}mm²</text>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 35}\" class=\"legend-text\">Área utilizada: #{format_area_m2(sheet.used_area)}</text>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 50}\" class=\"legend-text\">Área desperdiçada: #{format_area_m2(sheet.area - sheet.used_area)}</text>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 65}\" class=\"legend-text\">Maior sobra contígua: #{largest_offcut_label} (#{largest_offcut_area_text})</text>\n"
     end
 
     svg += "      </svg>"
@@ -937,8 +959,8 @@ class ReportGenerator
           
           <div class="footer">
             Chapa #{sheet_idx + 1} de #{@optimizer.used_sheets.length} | 
-            Área utilizada: #{sheet.used_area}mm² | 
-            Área desperdiçada: #{sheet.area - sheet.used_area}mm²
+            Área utilizada: #{format_area_m2(sheet.used_area)} | 
+            Área desperdiçada: #{format_area_m2(sheet.area - sheet.used_area)}
           </div>
         </div>
       SHEET_END
@@ -977,7 +999,7 @@ class ReportGenerator
                 <td>#{piece.label}</td>
                 <td>#{piece.width} mm</td>
                 <td>#{piece.height} mm</td>
-                <td>#{piece.area} mm²</td>
+                <td>#{format_area_m2(piece.area)}</td>
               </tr>
         UNPLACED_ROW
       end
@@ -1029,5 +1051,9 @@ class ReportGenerator
       false
     end
   end
-end
 
+  def format_area_m2(area_mm2, precision: 2)
+    value = area_mm2.to_f / 1_000_000.0
+    format("%.#{precision}f m²", value)
+  end
+end

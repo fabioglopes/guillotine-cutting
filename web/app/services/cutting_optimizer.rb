@@ -18,8 +18,68 @@ class CuttingOptimizer
     puts "Espessura de corte (serra): #{cutting_width}mm"
     puts "Rotação permitida: #{allow_rotation ? 'Sim' : 'Não'}"
     
-    # Ordena peças para maximizar sobras contíguas
-    # Agrupa peças similares em dimensões para deixar grandes áreas livres
+    # Try the new Max Waste Guillotine Optimizer first
+    best_result = nil
+    best_waste_area = 0
+    
+    @available_sheets.each_with_index do |template_sheet, sheet_idx|
+      puts "\n--- Testando chapa #{template_sheet.label} ---"
+      
+      # Use Max Waste Guillotine Optimizer
+      max_waste_optimizer = MaxWasteGuillotineOptimizer.new(
+        template_sheet.width,
+        template_sheet.height,
+        @required_pieces,
+        cutting_width
+      )
+      
+      layout = max_waste_optimizer.optimize
+      
+      if layout && layout[:placed_pieces].any?
+        # Convert to OptimizerSheet format
+        sheet = OptimizerSheet.new(
+          "#{template_sheet.id}-#{@used_sheets.length + 1}",
+          template_sheet.width,
+          template_sheet.height,
+          "#{template_sheet.label} ##{@used_sheets.length + 1}"
+        )
+        
+        layout[:placed_pieces].each do |placed|
+          sheet.add_piece(placed[:piece], placed[:x], placed[:y], placed[:rotated])
+        end
+        
+        # Calculate waste area
+        waste_area = max_waste_optimizer.calculate_largest_waste_area(layout)
+        utilization = max_waste_optimizer.calculate_utilization(layout)
+        
+        puts "  Maior sobra contígua: #{waste_area}mm²"
+        puts "  Aproveitamento: #{utilization}%"
+        
+        if waste_area > best_waste_area
+          best_result = sheet
+          best_waste_area = waste_area
+          puts "  ✅ Melhor resultado encontrado!"
+        end
+      end
+    end
+    
+    if best_result
+      best_result.cutting_width = cutting_width
+      best_result.free_rectangles = [] # Will be calculated by calculate_offcuts
+      @used_sheets << best_result
+      @unplaced_pieces = []
+      
+      puts "\n=== Otimização concluída (Max Waste) ==="
+      puts "Chapas utilizadas: #{@used_sheets.length}"
+      puts "Peças cortadas: #{@required_pieces.length}"
+      puts "Peças não colocadas: 0"
+      puts "Maior sobra contígua: #{best_waste_area}mm²"
+      
+      return
+    end
+    
+    # Fallback to original algorithm if Max Waste fails
+    puts "\n--- Fallback para algoritmo original ---"
     pieces_to_place = smart_sort_pieces(@required_pieces)
     
     @available_sheets.each_with_index do |template_sheet, sheet_idx|
@@ -61,7 +121,7 @@ class CuttingOptimizer
     
     @unplaced_pieces = pieces_to_place
     
-    puts "\n=== Otimização concluída ==="
+    puts "\n=== Otimização concluída (Fallback) ==="
     puts "Chapas utilizadas: #{@used_sheets.length}"
     puts "Peças cortadas: #{@required_pieces.length - @unplaced_pieces.length}"
     puts "Peças não colocadas: #{@unplaced_pieces.length}"
@@ -74,33 +134,31 @@ class CuttingOptimizer
 
   private
 
-  def smart_sort_pieces(pieces)
-    # Agrupa peças por altura similar (tolerância de 10mm)
-    # Isso ajuda a criar colunas uniformes e deixar grandes sobras contíguas
-    groups = []
-    pieces.each do |piece|
-      # Usar a maior dimensão como referência para agrupamento
-      ref_dim = [piece.width, piece.height].max
-      
-      # Procurar grupo existente com dimensão similar
-      group = groups.find { |g| (g[:dimension] - ref_dim).abs <= 10 }
-      
-      if group
-        group[:pieces] << piece
-      else
-        groups << { dimension: ref_dim, pieces: [piece] }
-      end
-    end
-    
-    # Ordenar grupos: primeiro os grupos com mais peças (para criar colunas uniformes)
-    # Dentro de cada grupo, ordenar por área (maior primeiro)
-    sorted_pieces = []
-    groups.sort_by { |g| [-g[:pieces].length, -g[:dimension]] }.each do |group|
-      sorted_pieces.concat(group[:pieces].sort_by(&:area).reverse)
-    end
-    
-    sorted_pieces
-  end
+     def smart_sort_pieces(pieces)
+       # Strategy: Group pieces by width to create uniform columns
+       # This maximizes the chance of creating one large contiguous waste area
+       groups = []
+       pieces.each do |piece|
+         # Group by width (with 10mm tolerance)
+         group = groups.find { |g| (g[:width] - piece.width).abs <= 10 }
+         
+         if group
+           group[:pieces] << piece
+         else
+           groups << { width: piece.width, pieces: [piece] }
+         end
+       end
+       
+       # Sort groups by width (narrowest first) to create columns from left to right
+       # This leaves the largest waste area on the right side
+       sorted_pieces = []
+       groups.sort_by { |g| g[:width] }.each do |group|
+         # Within each width group, sort by height (tallest first)
+         sorted_pieces.concat(group[:pieces].sort_by(&:height).reverse)
+       end
+       
+       sorted_pieces
+     end
 
   def expand_pieces(pieces)
     expanded = []

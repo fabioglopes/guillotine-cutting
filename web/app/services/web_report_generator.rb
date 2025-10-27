@@ -440,8 +440,8 @@ class WebReportGenerator
           
           <div class="footer-chapa">
             Chapa #{idx + 1} de #{@optimizer.used_sheets.length} | 
-            Área utilizada: #{sheet.used_area}mm² | 
-            Área desperdiçada: #{sheet.area - sheet.used_area}mm²
+            Área utilizada: #{format_area_m2(sheet.used_area)} | 
+            Área desperdiçada: #{format_area_m2(sheet.area - sheet.used_area)}
           </div>
         </div>
       SHEET_END2
@@ -478,7 +478,7 @@ class WebReportGenerator
                 <td>#{piece.label}</td>
                 <td>#{piece.width} mm</td>
                 <td>#{piece.height} mm</td>
-                <td>#{piece.area} mm²</td>
+                <td>#{format_area_m2(piece.area)}</td>
               </tr>
         UNPLACED_ROW
       end
@@ -575,6 +575,27 @@ class WebReportGenerator
       '#00BCD4', '#FF5722', '#795548', '#607D8B', '#8BC34A',
       '#FF9800', '#9E9E9E', '#3F51B5', '#F44336', '#CDDC39'
     ]
+
+    offcuts = []
+    largest_offcut_label = "Nenhuma"
+    largest_offcut_area_text = "0.00 m²"
+
+    if sheet.respond_to?(:calculate_offcuts)
+      offcuts = sheet.calculate_offcuts(200)
+      largest_offcut = offcuts.max_by do |o|
+        area = o[:area_mm2] ? o[:area_mm2].to_f : 0.0
+        area = o[:width].to_f * o[:height].to_f if area <= 0
+        area
+      end
+
+      if largest_offcut
+        largest_offcut_area_mm2 = largest_offcut[:area_mm2].to_f
+        largest_offcut_area_mm2 = largest_offcut[:width].to_f * largest_offcut[:height].to_f if largest_offcut_area_mm2 <= 0
+        largest_offcut_area_text = format_area_m2(largest_offcut_area_mm2)
+        base_label = "#{largest_offcut[:width]}×#{largest_offcut[:height]}mm"
+        largest_offcut_label = largest_offcut[:description] ? "#{largest_offcut[:description]} (#{base_label})" : base_label
+      end
+    end
     
     # Legenda
     svg += "\n        <!-- Legenda -->\n"
@@ -633,25 +654,26 @@ class WebReportGenerator
       svg += "\n        <!-- Estatísticas -->\n"
       svg += "        <line x1=\"#{padding + width + 55}\" y1=\"#{legend_stats_y}\" x2=\"#{padding + width + legend_width - 75}\" y2=\"#{legend_stats_y}\" stroke=\"#ccc\" stroke-width=\"1\"/>\n"
       svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 24}\" class=\"legend-text\" font-weight=\"bold\">Total de peças: #{sheet.placed_pieces.length}</text>\n"
-      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 42}\" class=\"legend-text\">Área utilizada: #{sheet.used_area}mm²</text>\n"
-      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 60}\" class=\"legend-text\">Área desperdiçada: #{sheet.area - sheet.used_area}mm²</text>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 42}\" class=\"legend-text\">Área utilizada: #{format_area_m2(sheet.used_area)}</text>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 60}\" class=\"legend-text\">Área desperdiçada: #{format_area_m2(sheet.area - sheet.used_area)}</text>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{legend_stats_y + 78}\" class=\"legend-text\">Maior sobra contígua: #{largest_offcut_label} (#{largest_offcut_area_text})</text>\n"
     end
 
     # Desenhar sobras com medidas
-    if sheet.respond_to?(:calculate_offcuts)
-      offcuts = sheet.calculate_offcuts(200)
+    if offcuts.any?
       offcuts.each_with_index do |o, idx|
         ox = padding + o[:x].to_f * scale
         oy = padding + o[:y].to_f * scale
         ow = o[:width].to_f * scale
         oh = o[:height].to_f * scale
 
-        # contorno da sobra
         svg += "\n        <!-- Sobra #{idx + 1} -->\n"
         svg += "        <rect x=\"#{ox}\" y=\"#{oy}\" width=\"#{ow}\" height=\"#{oh}\" fill=\"none\" stroke=\"#FF9800\" stroke-width=\"2\" stroke-dasharray=\"6,4\"/>\n"
 
-        # etiqueta de medida
-        label = "#{o[:width]}×#{o[:height]}mm"
+        label_area = o[:area_mm2] ? format_area_m2(o[:area_mm2]) : format_area_m2(o[:width].to_f * o[:height].to_f)
+        size_label = "#{o[:width]}×#{o[:height]}mm"
+        description = o[:description] ? "#{o[:description]} - " : ""
+        label = "#{description}#{size_label} (#{label_area})"
         cx = ox + ow / 2.0
         cy = oy + 22
         svg += "        <text x=\"#{cx}\" y=\"#{cy}\" class=\"legend-text\" text-anchor=\"middle\" font-weight=\"bold\" fill=\"#FF9800\">#{label}</text>\n"
@@ -661,6 +683,11 @@ class WebReportGenerator
     svg += "      </svg>"
     
     svg
+  end
+
+  def format_area_m2(area_mm2, precision: 2)
+    value = area_mm2.to_f / 1_000_000.0
+    format("%.#{precision}f m²", value)
   end
 
   def generate_cut_lines(sheet, padding, scale)
@@ -786,4 +813,3 @@ class WebReportGenerator
     (used_area.to_f / total_area * 100).round(2)
   end
 end
-
