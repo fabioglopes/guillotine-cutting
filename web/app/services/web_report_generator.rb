@@ -12,11 +12,11 @@ class WebReportGenerator
       filename = "sheet_#{idx + 1}.svg"
       svg_files[filename] = generate_svg_layout(sheet)
       
-      # Novo: Gerar SVGs para histórico de cortes
+      # Gerar SVGs para histórico de cortes (snapshots)
       if sheet.respond_to?(:snapshots) && sheet.snapshots.present?
         sheet.snapshots.each_with_index do |snapshot, step|
-          step_filename = "sheet_#{idx + 1}-step_#{step + 1}.svg"
-          svg_files[step_filename] = generate_snapshot_svg(sheet, snapshot)
+          step_filename = "sheet_#{idx + 1}_step_#{step}.svg"
+          svg_files[step_filename] = generate_cutting_step_svg(sheet, snapshot, step)
         end
       end
     end
@@ -671,7 +671,122 @@ class WebReportGenerator
     svg
   end
 
-  # Novo método para gerar SVG de snapshot
+  # Método para gerar SVG de cada passo de corte (chapa reduzida)
+  def generate_cutting_step_svg(original_sheet, snapshot, step_number)
+    # Usar a área da chapa do snapshot (reduzida após cortes)
+    # Se não existir, usar a chapa completa
+    sheet_area = snapshot[:sheet_area] || {
+      x: 0,
+      y: 0,
+      width: original_sheet.width,
+      height: original_sheet.height
+    }
+    
+    # Calcular escala baseada na área atual
+    max_width = 1200
+    max_height = 800
+    scale_w = max_width.to_f / sheet_area[:width]
+    scale_h = max_height.to_f / sheet_area[:height]
+    scale = [scale_w, scale_h, 0.8].min
+    
+    # Dimensões da área atual (reduzida)
+    width = sheet_area[:width] * scale
+    height = sheet_area[:height] * scale
+    padding = 80
+    legend_width = 300
+    
+    svg_width = width + padding * 2 + legend_width
+    svg_height = height + padding * 2
+    
+    svg = <<~SVG
+      <?xml version="1.0" encoding="UTF-8"?>
+      <svg xmlns="http://www.w3.org/2000/svg" width="#{svg_width}" height="#{svg_height}" viewBox="0 0 #{svg_width} #{svg_height}">
+        <defs>
+          <pattern id="grid-step#{step_number}" width="#{50 * scale}" height="#{50 * scale}" patternUnits="userSpaceOnUse">
+            <path d="M #{50 * scale} 0 L 0 0 0 #{50 * scale}" fill="none" stroke="#ddd" stroke-width="0.5"/>
+          </pattern>
+          <filter id="shadow">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        
+        <style>
+          .sheet { fill: url(#grid-step#{step_number}); stroke: #333; stroke-width: 3; filter: url(#shadow); }
+          .sheet-reduced { fill: #e8f5e9; stroke: #4CAF50; stroke-width: 3; stroke-dasharray: 10,5; }
+          .piece { stroke: #000; stroke-width: 1.5; opacity: 0.85; }
+          .piece-highlight { stroke: #FF5722; stroke-width: 3; opacity: 1; }
+          .label-id { font-family: 'Arial Black', Arial, sans-serif; font-size: 26px; font-weight: bold; fill: #000; }
+          .label-size { font-family: Arial, sans-serif; font-size: 20px; fill: #222; }
+          .title { font-family: Arial, sans-serif; font-size: 34px; font-weight: bold; fill: #1a1a1a; }
+          .subtitle { font-family: Arial, sans-serif; font-size: 22px; fill: #555; }
+          .step-description { font-family: Arial, sans-serif; font-size: 20px; fill: #FF5722; font-weight: bold; }
+          .dimension-line { stroke: #4CAF50; stroke-width: 2; }
+          .dimension-text { font-family: Arial, sans-serif; font-size: 18px; fill: #4CAF50; font-weight: bold; }
+        </style>
+        
+        <!-- Título -->
+        <text x="#{padding}" y="40" class="title">#{original_sheet.label} - Passo #{step_number}</text>
+        <text x="#{padding}" y="70" class="step-description">#{snapshot[:description]}</text>
+        
+        <!-- Dimensões da área atual (reduzida) -->
+        <line x1="#{padding}" y1="#{padding + height + 15}" x2="#{padding + width}" y2="#{padding + height + 15}" class="dimension-line"/>
+        <text x="#{padding + width/2}" y="#{padding + height + 35}" class="dimension-text" text-anchor="middle">Largura: #{sheet_area[:width].round(1)}mm</text>
+        
+        <line x1="#{padding - 15}" y1="#{padding}" x2="#{padding - 15}" y2="#{padding + height}" class="dimension-line"/>
+        <text x="#{padding - 30}" y="#{padding + height/2}" class="dimension-text" text-anchor="middle" transform="rotate(-90 #{padding - 30} #{padding + height/2})">Altura: #{sheet_area[:height].round(1)}mm</text>
+        
+        <!-- Área da chapa atual (reduzida) -->
+        <rect x="#{padding}" y="#{padding}" width="#{width}" height="#{height}" class="sheet-reduced"/>
+        
+        <!-- Indicador de posição na chapa original -->
+        <text x="#{padding}" y="#{padding + height + 60}" class="subtitle">
+          Posição: X=#{sheet_area[:x]}mm, Y=#{sheet_area[:y]}mm
+        </text>
+    SVG
+    
+    colors = [
+      '#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9C27B0', 
+      '#00BCD4', '#FF5722', '#795548', '#607D8B', '#8BC34A'
+    ]
+    
+    # Desenhar peças já colocadas (relativas à área atual)
+    placed_pieces = snapshot[:placed_pieces] || []
+    placed_pieces.each_with_index do |pp, idx|
+      piece = pp[:piece]
+      # Ajustar coordenadas relativas à área do snapshot
+      x = padding + (pp[:x] - sheet_area[:x]) * scale
+      y = padding + (pp[:y] - sheet_area[:y]) * scale
+      w = piece.width * scale
+      h = piece.height * scale
+      color = colors[idx % colors.length]
+      
+      # Destacar a última peça colocada
+      piece_class = (snapshot[:cut_type] == :piece_placed && snapshot[:piece_placed] == piece.id) ? "piece piece-highlight" : "piece"
+      
+      # Só desenhar se a peça estiver visível na área atual
+      if pp[:x] >= sheet_area[:x] && pp[:y] >= sheet_area[:y] &&
+         pp[:x] < sheet_area[:x] + sheet_area[:width] && 
+         pp[:y] < sheet_area[:y] + sheet_area[:height]
+        
+        svg += "\n        <!-- Peça #{piece.id} -->\n"
+        svg += "        <rect x=\"#{x}\" y=\"#{y}\" width=\"#{w}\" height=\"#{h}\" fill=\"#{color}\" class=\"#{piece_class}\"/>\n"
+        
+        if w > 80 && h > 50
+          label_x = x + w/2
+          label_y = y + h/2
+          svg += "        <text x=\"#{label_x}\" y=\"#{label_y}\" class=\"label-id\" text-anchor=\"middle\">#{piece.id}</text>\n"
+          svg += "        <text x=\"#{label_x}\" y=\"#{label_y + 25}\" class=\"label-size\" text-anchor=\"middle\">#{piece.width}×#{piece.height}mm</text>\n"
+        else
+          svg += "        <text x=\"#{x + w/2}\" y=\"#{y + h/2 + 7}\" class=\"label-id\" text-anchor=\"middle\" font-size=\"18\">#{piece.id}</text>\n"
+        end
+      end
+    end
+    
+    svg += "      </svg>"
+    svg
+  end
+  
+  # Método antigo para gerar SVG de snapshot (mantido para compatibilidade)
   def generate_snapshot_svg(sheet, snapshot)
     # Copiar lógica de generate_svg_layout, mas usar placed_pieces e free_rectangles do snapshot
     # Calcula escala dinâmica para caber bem na tela

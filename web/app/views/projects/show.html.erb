@@ -237,6 +237,21 @@
 
   <!-- Results Section -->
   <% if @project.optimized? %>
+    <!-- Optimization Log -->
+    <% if @project.optimization_log.present? %>
+      <div class="bg-gray-900 rounded-lg shadow-sm p-6 border border-gray-700 mb-8">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-white">📋 Log de Otimização</h2>
+          <button onclick="document.getElementById('optimization-log').classList.toggle('hidden')" class="bg-gray-700 hover:bg-gray-600 text-white font-medium py-1 px-3 rounded transition duration-200 text-sm">
+            Mostrar/Ocultar
+          </button>
+        </div>
+        <div id="optimization-log" class="hidden">
+          <pre class="bg-black text-green-400 p-4 rounded font-mono text-sm overflow-x-auto max-h-96 overflow-y-auto"><%= @project.optimization_log %></pre>
+        </div>
+      </div>
+    <% end %>
+    
     <!-- Statistics -->
     <div class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-sm p-6 border border-green-200 mb-8">
       <h2 class="text-2xl font-semibold text-gray-900 mb-4">📊 Resultados da Otimização</h2>

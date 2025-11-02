@@ -124,13 +124,32 @@ class RasterPointOptimizer
     best_pattern
   end
   
-  # Preenchimento guloso melhorado usando raster points
+  # Preenchimento guloso melhorado usando raster points com snapshots de cortes
   def greedy_fill_improved(sheet, pieces, allow_rotation, cutting_width)
     placed = []
     remaining = pieces.dup.sort_by { |p| -p.area }
+    snapshots = []
+    
+    # Estado inicial da chapa
+    current_sheet = {
+      x: 0,
+      y: 0,
+      width: sheet.width,
+      height: sheet.height
+    }
+    
+    # Snapshot inicial: chapa completa vazia
+    snapshots << {
+      step: 0,
+      description: "Chapa inicial completa",
+      sheet_area: current_sheet.dup,
+      placed_pieces: [],
+      cut_type: nil
+    }
     
     # Usar estratégia de níveis (shelf-based)
     current_y = 0
+    step_number = 1
     
     while remaining.any? && current_y < sheet.height
       # Criar um novo nível (shelf)
@@ -138,30 +157,101 @@ class RasterPointOptimizer
       shelf_height = 0
       current_x = 0
       
+      # Snapshot: Corte horizontal para criar novo shelf (se não for o primeiro)
+      if current_y > 0
+        snapshots << {
+          step: step_number,
+          description: "Corte #{step_number}: Horizontal em Y=#{current_y}mm (separar shelf)",
+          sheet_area: {
+            x: 0,
+            y: current_y,
+            width: sheet.width,
+            height: sheet.height - current_y
+          },
+          placed_pieces: placed.dup,
+          cut_type: :horizontal,
+          cut_position: current_y
+        }
+        step_number += 1
+      end
+      
       # Tentar preencher este nível
       remaining.dup.each do |piece|
         piece_width = piece.width + cutting_width
         piece_height = piece.height + cutting_width
         rotated = false
         
+        # Snapshot: Corte vertical para separar peça (se não for a primeira do shelf)
+        if current_x > 0
+          snapshots << {
+            step: step_number,
+            description: "Corte #{step_number}: Vertical em X=#{current_x}mm (separar peça)",
+            sheet_area: {
+              x: current_x,
+              y: current_y,
+              width: sheet.width - current_x,
+              height: shelf_height > 0 ? shelf_height : sheet.height - current_y
+            },
+            placed_pieces: placed.dup,
+            cut_type: :vertical,
+            cut_position: current_x
+          }
+          step_number += 1
+        end
+        
         # Tentar sem rotação
         if current_x + piece_width <= sheet.width && piece.height <= sheet.height - current_y
-          shelf_pieces << { piece: piece, x: current_x, y: current_y, rotated: false }
+          piece_info = { piece: piece, x: current_x, y: current_y, rotated: false }
+          shelf_pieces << piece_info
+          placed << piece_info
           shelf_height = [shelf_height, piece_height].max
+          
+          # Snapshot: Peça colocada
+          snapshots << {
+            step: step_number,
+            description: "Passo #{step_number}: Peça #{piece.id} colocada em (#{current_x}, #{current_y})",
+            sheet_area: {
+              x: current_x + piece_width,
+              y: current_y,
+              width: sheet.width - (current_x + piece_width),
+              height: shelf_height
+            },
+            placed_pieces: placed.dup,
+            cut_type: :piece_placed,
+            piece_placed: piece.id
+          }
+          step_number += 1
+          
           current_x += piece_width
           remaining.delete(piece)
         # Tentar com rotação
         elsif allow_rotation && current_x + piece_height <= sheet.width && piece.width <= sheet.height - current_y
           piece.rotate!
-          shelf_pieces << { piece: piece, x: current_x, y: current_y, rotated: true }
+          piece_info = { piece: piece, x: current_x, y: current_y, rotated: true }
+          shelf_pieces << piece_info
+          placed << piece_info
           shelf_height = [shelf_height, piece_width].max
+          
+          # Snapshot: Peça rotacionada colocada
+          snapshots << {
+            step: step_number,
+            description: "Passo #{step_number}: Peça #{piece.id} rotacionada e colocada em (#{current_x}, #{current_y})",
+            sheet_area: {
+              x: current_x + piece_height,
+              y: current_y,
+              width: sheet.width - (current_x + piece_height),
+              height: shelf_height
+            },
+            placed_pieces: placed.dup,
+            cut_type: :piece_placed,
+            piece_placed: piece.id
+          }
+          step_number += 1
+          
           current_x += piece_height
           remaining.delete(piece)
         end
       end
-      
-      # Adicionar peças deste nível
-      placed.concat(shelf_pieces)
       
       # Avançar para próximo nível
       current_y += shelf_height
@@ -170,12 +260,28 @@ class RasterPointOptimizer
       break if shelf_pieces.empty?
     end
     
+    # Snapshot final
+    snapshots << {
+      step: step_number,
+      description: "Finalizado: #{placed.length} peças colocadas, #{remaining.length} restantes",
+      sheet_area: {
+        x: 0,
+        y: 0,
+        width: sheet.width,
+        height: sheet.height
+      },
+      placed_pieces: placed.dup,
+      cut_type: :final
+    }
+    
     total_area = placed.sum { |pp| pp[:piece].area }
+    
+    puts "  #{snapshots.length} snapshots gerados (#{step_number} passos)"
     
     {
       pieces: placed,
       value: placed.length * 1000 + total_area,
-      snapshots: []
+      snapshots: snapshots
     }
   end
   

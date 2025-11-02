@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_02_224516) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_02_230146) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
@@ -89,6 +89,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_02_224516) do
     t.string "name"
     t.string "optimization_algorithm", default: "two_stage_guillotine"
     t.text "optimization_data"
+    t.text "optimization_log"
     t.integer "pieces_placed"
     t.integer "pieces_total"
     t.integer "sheets_used"

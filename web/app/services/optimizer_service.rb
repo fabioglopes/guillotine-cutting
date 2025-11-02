@@ -12,6 +12,11 @@ class OptimizerService
       # Clear all existing result files before new optimization
       @project.result_files.purge
 
+      # Capturar log de otimização
+      log_buffer = StringIO.new
+      original_stdout = $stdout
+      $stdout = log_buffer
+
       # Load sheets and pieces
       sheets = load_sheets
       pieces = load_pieces
@@ -37,6 +42,10 @@ class OptimizerService
         allow_rotation: @project.allow_rotation,
         cutting_width: @project.cutting_width || 3
       )
+      
+      # Restaurar stdout e salvar log
+      $stdout = original_stdout
+      @project.update(optimization_log: log_buffer.string)
 
       # Novo: Run alternative optimization with different sorting
       puts "\n=== Executando otimização alternativa ==="
@@ -66,6 +75,9 @@ class OptimizerService
       @errors << "Optimization error: #{e.message}"
       Rails.logger.error("Optimization error for project #{@project.id}: #{e.message}\n#{e.backtrace.join("\n")}")
       false
+    ensure
+      # Garantir que stdout seja sempre restaurado
+      $stdout = original_stdout if defined?(original_stdout)
     end
   end
 
