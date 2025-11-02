@@ -38,12 +38,22 @@ class CuttingOptimizer
       placed_in_sheet = []
       remaining_pieces = []
       
+      # Array para snapshots da sheet
+      sheet.snapshots = []  # Novo: array para estados intermediários
+      
       pieces_to_place.each do |piece|
         result = packer.insert(piece, allow_rotation)
         
         if result
           sheet.add_piece(piece, result[:x], result[:y], result[:rotated])
           placed_in_sheet << piece
+          
+          # Novo: Salvar snapshot após cada inserção
+          snapshot = {
+            placed_pieces: sheet.placed_pieces.dup,
+            free_rectangles: packer.free_rectangles.dup
+          }
+          sheet.snapshots << snapshot
         else
           remaining_pieces << piece
         end

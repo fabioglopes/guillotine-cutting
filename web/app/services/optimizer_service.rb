@@ -9,36 +9,57 @@ class OptimizerService
 
   def run_optimization
     begin
+      # Clear all existing result files before new optimization
+      @project.result_files.purge
+
       # Load sheets and pieces
       sheets = load_sheets
       pieces = load_pieces
 
       return false if sheets.empty? || pieces.empty?
 
-      # Choose optimizer based on mode
-      if @project.guillotine_mode
-        puts "🔪 Modo Guilhotina Ativado - Minimizando cortes!"
-        optimizer = GuillotineOptimizer.new(sheets, pieces)
-      else
-        optimizer = CuttingOptimizer.new(sheets, pieces)
+      # Run primary optimization based on selected algorithm
+      algorithm = @project.optimization_algorithm || 'two_stage_guillotine'
+      
+      case algorithm
+      when 'raster_point_dp'
+        puts "🧮 Usando Raster Point DP (paper UNICAMP)!"
+        primary_optimizer = RasterPointOptimizer.new(sheets, pieces)
+      when 'cutting_optimizer'
+        puts "📐 Usando Cutting Optimizer (padrão)!"
+        primary_optimizer = CuttingOptimizer.new(sheets, pieces)
+      else # 'two_stage_guillotine'
+        puts "🔪 Usando Two-Stage Guillotine (paper USP)!"
+        primary_optimizer = TwoStageGuillotineOptimizer.new(sheets, pieces)
       end
       
-      optimizer.optimize(
+      primary_optimizer.optimize(
         allow_rotation: @project.allow_rotation,
         cutting_width: @project.cutting_width || 3
       )
 
-      # Generate and save results
-      generate_and_save_results(optimizer)
+      # Novo: Run alternative optimization with different sorting
+      puts "\n=== Executando otimização alternativa ==="
+      alternative_optimizer = CuttingOptimizer.new(sheets, pieces)
+      alternative_optimizer.optimize(
+        allow_rotation: @project.allow_rotation,
+        cutting_width: @project.cutting_width || 3
+      ) # Assumindo que alternative usa uma variação, ex: different smart_sort_pieces
 
-      # Update project statistics
-      update_project_stats(optimizer)
+      # Generate and save results for primary
+      generate_and_save_results(primary_optimizer, prefix: 'primary_')
+
+      # Generate and save results for alternative
+      generate_and_save_results(alternative_optimizer, prefix: 'alt_')
+
+      # Update project statistics using primary
+      update_project_stats(primary_optimizer)
       
-      # Save optimization data for offcut generation
-      save_optimization_data(optimizer)
+      # Save optimization data for primary
+      save_optimization_data(primary_optimizer)
       
-      # Track which inventory sheets were used (but don't reserve yet - only when marked as cut)
-      track_inventory_usage(optimizer) if @project.use_inventory?
+      # Track inventory usage for primary
+      track_inventory_usage(primary_optimizer) if @project.use_inventory?
 
       true
     rescue => e
@@ -111,19 +132,17 @@ class OptimizerService
     pieces
   end
 
-  def generate_and_save_results(optimizer)
-    # Clear existing result files
-    @project.result_files.purge
-
+  def generate_and_save_results(optimizer, prefix: '')
     # Generate reports
     generator = WebReportGenerator.new(optimizer, @project)
     
     # Generate SVGs
     svg_files = generator.generate_svg_files
     svg_files.each do |filename, content|
+      prefixed_filename = "#{prefix}#{filename}"
       @project.result_files.attach(
         io: StringIO.new(content),
-        filename: filename,
+        filename: prefixed_filename,
         content_type: 'image/svg+xml'
       )
     end
@@ -132,7 +151,7 @@ class OptimizerService
     index_html = generator.generate_index_html
     @project.result_files.attach(
       io: StringIO.new(index_html),
-      filename: 'index.html',
+      filename: "#{prefix}index.html",
       content_type: 'text/html'
     )
 
@@ -140,7 +159,7 @@ class OptimizerService
     print_html = generator.generate_print_html
     @project.result_files.attach(
       io: StringIO.new(print_html),
-      filename: 'print.html',
+      filename: "#{prefix}print.html",
       content_type: 'text/html'
     )
   end

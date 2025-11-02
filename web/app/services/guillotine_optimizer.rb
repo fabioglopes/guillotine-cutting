@@ -23,6 +23,7 @@ class GuillotineOptimizer
     puts "\nGrupos identificados: #{groups.length}"
     groups.each_with_index do |group, i|
       puts "  Grupo #{i+1}: #{group[:pieces].length} peças de ~#{group[:dimension]}mm"
+      puts "    Peças: #{group[:pieces].map(&:id).join(', ')}"
     end
     
     @available_sheets.each_with_index do |template_sheet, sheet_idx|
@@ -35,6 +36,8 @@ class GuillotineOptimizer
         "#{template_sheet.label} ##{@used_sheets.length + 1}"
       )
       
+      puts "\nProcessando chapa #{sheet.label} (#{sheet.width}x#{sheet.height}mm)"
+      
       # Tentar colocar peças usando estratégia de faixas (strips)
       placed = place_in_strips(sheet, pieces_to_place, groups, allow_rotation, cutting_width)
       
@@ -42,7 +45,8 @@ class GuillotineOptimizer
         # Salvar cutting_width para geração de sobras
         sheet.cutting_width = cutting_width
         @used_sheets << sheet
-        puts "  Chapa #{sheet.label}: #{placed} peças colocadas (#{sheet.efficiency}% utilizada)"
+        puts "  Resumo chapa #{sheet.label}: #{placed} peças colocadas (#{sheet.efficiency}% utilizada)"
+        puts "  Peças colocadas: #{sheet.placed_pieces.map { |pp| "#{pp[:piece].id} @ (#{pp[:x]},#{pp[:y]}) #{pp[:rotated] ? 'rotacionada' : ''}" }.join(', ')}"
       end
     end
     
@@ -51,7 +55,7 @@ class GuillotineOptimizer
     puts "\n=== Otimização concluída ==="
     puts "Chapas utilizadas: #{@used_sheets.length}"
     puts "Peças cortadas: #{@required_pieces.length - @unplaced_pieces.length}"
-    puts "Peças não colocadas: #{@unplaced_pieces.length}"
+    puts "Peças não colocadas: #{@unplaced_pieces.length} (IDs: #{@unplaced_pieces.map(&:id).join(', ')})"
     puts "Cortes guilhotina: Minimizados!"
     puts ""
   end
@@ -64,8 +68,10 @@ class GuillotineOptimizer
     tolerance = 5 # mm de tolerância para considerar mesma dimensão
     
     pieces.each do |piece|
+      # Usar a dimensão menor como referência para faixas (para minimizar cortes)
+      dim = [piece.width, piece.height].min
+      
       # Tenta encontrar grupo existente com dimensão similar
-      dim = piece.width
       found = false
       
       groups.each do |group|
@@ -85,8 +91,8 @@ class GuillotineOptimizer
       end
     end
     
-    # Ordena grupos por quantidade de peças (mais peças primeiro)
-    groups.sort_by! { |g| -g[:pieces].length }
+    # Ordena grupos por potencial de preenchimento: priorizar grupos que podem preencher a altura/largura da chapa
+    groups.sort_by! { |g| - (g[:pieces].length * g[:dimension]) } # Maior "volume" primeiro para menos faixas/cortes
     groups
   end
   
@@ -103,46 +109,77 @@ class GuillotineOptimizer
       group_pieces = group[:pieces].select { |p| pieces_to_place.include?(p) }
       next if group_pieces.empty?
       
-      # Tentar criar uma faixa vertical com essas peças
+      puts "    Tentando faixa para grupo ~#{group[:dimension]}mm com #{group_pieces.length} peças"
+      
+      # Tentar criar uma faixa vertical com essas peças, priorizando preenchimento completo
       strip_width = group[:dimension] + cutting_width
       
       # Verificar se cabe na chapa
-      next if current_x + strip_width > sheet.width
+      if current_x + strip_width > sheet.width
+        puts "      Faixa não cabe (largura: #{strip_width}mm, espaço restante: #{sheet.width - current_x}mm)"
+        next
+      end
+      
+      # Ordenar peças do grupo por altura decrescente para melhor empilhamento
+      group_pieces.sort_by! { |p| -p.height }
       
       # Colocar peças nesta faixa
       current_y = 0
       
       group_pieces.each do |piece|
-        # Verificar se cabe na altura
+        rotated = false
         piece_height = piece.height + cutting_width
+        piece_width = piece.width + cutting_width
+        
+        # Se allow_rotation, tentar rotacionar se não couber
+        if allow_rotation && (current_y + piece_height > sheet.height) && (current_y + piece_width <= sheet.height) && (piece_width <= strip_width)
+          piece.rotate!
+          piece_height, piece_width = piece_width, piece_height
+          rotated = true
+          puts "      Rotacionando peça #{piece.id} para caber (nova altura: #{piece_height - cutting_width}mm)"
+        end
         
         if current_y + piece_height <= sheet.height
           # Colocar peça
-          sheet.add_piece(piece, current_x, current_y, false)
+          sheet.add_piece(piece, current_x, current_y, rotated)
           pieces_to_place.delete(piece)
           placed_count += 1
           current_y += piece_height
+          puts "      Colocada peça #{piece.id} @ (#{current_x}, #{current_y - piece_height}) #{rotated ? 'rotacionada' : ''} (#{piece.width}x#{piece.height}mm)"
+        else
+          puts "      Peça #{piece.id} não coube na faixa (altura necessária: #{piece_height}mm, restante: #{sheet.height - current_y}mm)"
         end
       end
       
-      # Avançar para próxima faixa
-      current_x += strip_width if placed_count > 0
+      # Avançar para próxima faixa apenas se algo foi colocado
+      if placed_count > 0
+        current_x += strip_width
+        puts "    Faixa completada @ x=#{current_x - strip_width}, peças colocadas: #{group_pieces.length - group_pieces.count { |p| pieces_to_place.include?(p) }}"
+      end
     end
     
-    # Se ainda tem espaço, tentar colocar peças restantes sem otimização de cortes
-    remaining_pieces = pieces_to_place.select { |p| 
-      p.width + cutting_width <= (sheet.width - current_x) &&
-      p.height + cutting_width <= sheet.height
-    }
-    
-    remaining_pieces.each do |piece|
-      # Buscar melhor posição para peça restante
-      best_pos = find_best_position(sheet, piece, cutting_width)
+    # Se ainda tem espaço, tentar colocar peças restantes com GuillotineBinPacker para melhor otimização
+    if current_x < sheet.width
+      puts "\n    Espaço restante: largura #{sheet.width - current_x}mm, altura #{sheet.height}mm"
+      puts "    Peças restantes: #{pieces_to_place.length} (IDs: #{pieces_to_place.map(&:id).join(', ')})"
       
-      if best_pos
-        sheet.add_piece(piece, best_pos[:x], best_pos[:y], best_pos[:rotated])
-        pieces_to_place.delete(piece)
-        placed_count += 1
+      packer = GuillotineBinPacker.new(sheet.width - current_x, sheet.height, cutting_width)
+      packer.free_rectangles = [{ x: 0, y: 0, width: sheet.width - current_x, height: sheet.height }]  # Inicializar relativo ao espaço restante
+      
+      remaining_pieces = pieces_to_place.dup
+      remaining_pieces.each do |piece|
+        puts "      Tentando inserir peça restante #{piece.id} (#{piece.width}x#{piece.height}mm)"
+        result = packer.insert(piece, allow_rotation)
+        if result
+          adjusted_x = result[:x] + current_x
+          sheet.add_piece(piece, adjusted_x, result[:y], result[:rotated])
+          pieces_to_place.delete(piece)
+          placed_count += 1
+          puts "        Inserida @ (#{adjusted_x}, #{result[:y]}) #{result[:rotated] ? 'rotacionada' : ''}"
+          puts "        Free rectangles após inserção: #{packer.free_rectangles.map { |r| "(#{r[:x]},#{r[:y]}) #{r[:width]}x#{r[:height]}" }.join(', ')}"
+        else
+          puts "        Não coube"
+        end
       end
     end
     

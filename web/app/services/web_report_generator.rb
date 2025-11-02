@@ -11,6 +11,14 @@ class WebReportGenerator
     @optimizer.used_sheets.each_with_index do |sheet, idx|
       filename = "sheet_#{idx + 1}.svg"
       svg_files[filename] = generate_svg_layout(sheet)
+      
+      # Novo: Gerar SVGs para histórico de cortes
+      if sheet.respond_to?(:snapshots) && sheet.snapshots.present?
+        sheet.snapshots.each_with_index do |snapshot, step|
+          step_filename = "sheet_#{idx + 1}-step_#{step + 1}.svg"
+          svg_files[step_filename] = generate_snapshot_svg(sheet, snapshot)
+        end
+      end
     end
     
     svg_files
@@ -661,6 +669,139 @@ class WebReportGenerator
     svg += "      </svg>"
     
     svg
+  end
+
+  # Novo método para gerar SVG de snapshot
+  def generate_snapshot_svg(sheet, snapshot)
+    # Copiar lógica de generate_svg_layout, mas usar placed_pieces e free_rectangles do snapshot
+    # Calcula escala dinâmica para caber bem na tela
+    max_width = 1200
+    max_height = 800
+    scale_w = max_width.to_f / sheet.width
+    scale_h = max_height.to_f / sheet.height
+    scale = [scale_w, scale_h, 0.8].min
+    
+    width = sheet.width * scale
+    height = sheet.height * scale
+    padding = 80
+    legend_width = 300
+    
+    svg_width = width + padding * 2 + legend_width
+    svg_height = height + padding * 2
+    
+    svg = <<~SVG
+      <?xml version="1.0" encoding="UTF-8"?>
+      <svg xmlns="http://www.w3.org/2000/svg" width="#{svg_width}" height="#{svg_height}" viewBox="0 0 #{svg_width} #{svg_height}">
+        <!-- Definições iguais ao original -->
+        <defs>
+          <pattern id="grid" width="#{50 * scale}" height="#{50 * scale}" patternUnits="userSpaceOnUse">
+            <path d="M #{50 * scale} 0 L 0 0 0 #{50 * scale}" fill="none" stroke="#ddd" stroke-width="0.5"/>
+          </pattern>
+          <filter id="shadow">
+            <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.3"/>
+          </filter>
+        </defs>
+        
+        <style>
+          /* Estilos iguais ao original */
+          .sheet { fill: url(#grid); stroke: #333; stroke-width: 3; filter: url(#shadow); }
+          .piece { stroke: #000; stroke-width: 1.5; opacity: 0.85; cursor: pointer; }
+          .piece:hover { opacity: 1; stroke-width: 2.5; }
+          .label-id { font-family: 'Arial Black', Arial, sans-serif; font-size: 26px; font-weight: bold; fill: #000; }
+          .label-size { font-family: Arial, sans-serif; font-size: 20px; fill: #222; }
+          .label-name { font-family: Arial, sans-serif; font-size: 18px; fill: #444; }
+          .title { font-family: Arial, sans-serif; font-size: 34px; font-weight: bold; fill: #1a1a1a; }
+          .subtitle { font-family: Arial, sans-serif; font-size: 22px; fill: #555; }
+          .legend-title { font-family: Arial, sans-serif; font-size: 22px; font-weight: bold; fill: #333; }
+          .legend-text { font-family: Arial, sans-serif; font-size: 16px; fill: #555; }
+          .dimension-line { stroke: #666; stroke-width: 1; stroke-dasharray: 3,3; }
+          .dimension-text { font-family: Arial, sans-serif; font-size: 18px; fill: #666; }
+          .rotation-indicator { font-family: Arial, sans-serif; font-size: 26px; fill: #E91E63; }
+          .cut-line { stroke: #d32f2f; stroke-width: 2.5; stroke-dasharray: 8,4; opacity: 0.8; }
+          .cut-number { fill: #d32f2f; font-family: Arial, sans-serif; font-size: 20px; font-weight: bold; }
+          .cut-circle { fill: white; stroke: #d32f2f; stroke-width: 2; }
+          .free-rect { fill: none; stroke: #4CAF50; stroke-width: 2; stroke-dasharray: 5,5; opacity: 0.5; }
+        </style>
+        
+        <!-- Título com passo -->
+        <text x="#{padding}" y="40" class="title">#{sheet.label} - Passo #{snapshot[:placed_pieces].length}</text>
+        <text x="#{padding}" y="65" class="subtitle">Dimensões: #{sheet.width}x#{sheet.height}mm | Peças colocadas: #{snapshot[:placed_pieces].length}</text>
+        
+        <!-- Dimensões da chapa (igual) -->
+        <line x1="#{padding}" y1="#{padding + height + 15}" x2="#{padding + width}" y2="#{padding + height + 15}" class="dimension-line"/>
+        <text x="#{padding + width/2}" y="#{padding + height + 30}" class="dimension-text" text-anchor="middle">#{sheet.width}mm</text>
+        
+        <line x1="#{padding - 15}" y1="#{padding}" x2="#{padding - 15}" y2="#{padding + height}" class="dimension-line"/>
+        <text x="#{padding - 25}" y="#{padding + height/2}" class="dimension-text" text-anchor="middle" transform="rotate(-90 #{padding - 25} #{padding + height/2})">#{sheet.height}mm</text>
+        
+        <!-- Chapa principal -->
+        <rect x="#{padding}" y="#{padding}" width="#{width}" height="#{height}" class="sheet"/>
+      SVG
+      
+      colors = [
+        '#4CAF50', '#2196F3', '#FFC107', '#E91E63', '#9C27B0', 
+        '#00BCD4', '#FF5722', '#795548', '#607D8B', '#8BC34A',
+        '#FF9800', '#9E9E9E', '#3F51B5', '#F44336', '#CDDC39'
+      ]
+      
+      # Legenda (adaptada para snapshot)
+      svg += "\n        <!-- Legenda -->\n"
+      svg += "        <rect x=\"#{padding + width + 40}\" y=\"#{padding}\" width=\"#{legend_width - 60}\" height=\"#{[snapshot[:placed_pieces].length * 42 + 50, height].min}\" fill=\"#fafafa\" stroke=\"#ccc\" stroke-width=\"1\" rx=\"5\"/>\n"
+      svg += "        <text x=\"#{padding + width + 55}\" y=\"#{padding + 30}\" class=\"legend-title\">Peças Colocadas</text>\n"
+      
+      snapshot[:placed_pieces].each_with_index do |pp, idx|
+        piece = pp[:piece]
+        x = padding + pp[:x] * scale
+        y = padding + pp[:y] * scale
+        w = piece.width * scale
+        h = piece.height * scale
+        color = colors[idx % colors.length]
+        
+        # Peça no layout
+        svg += "\n        <!-- Peça #{idx + 1}: #{piece.label} -->\n"
+        svg += "        <rect x=\"#{x}\" y=\"#{y}\" width=\"#{w}\" height=\"#{h}\" fill=\"#{color}\" class=\"piece\"/>\n"
+        
+        # Labels (igual ao original)
+        if w > 80 && h > 50
+          label_x = x + w/2
+          label_y = y + h/2 - 14
+          
+          svg += "        <text x=\"#{label_x}\" y=\"#{label_y}\" class=\"label-id\" text-anchor=\"middle\">#{piece.id}</text>\n"
+          svg += "        <text x=\"#{label_x}\" y=\"#{label_y + 28}\" class=\"label-size\" text-anchor=\"middle\">#{piece.width}×#{piece.height}mm</text>\n"
+          
+          if pp[:rotated]
+            svg += "        <text x=\"#{x + 8}\" y=\"#{y + 30}\" class=\"rotation-indicator\">↻</text>\n"
+          end
+        else
+          svg += "        <text x=\"#{x + w/2}\" y=\"#{y + h/2 + 7}\" class=\"label-id\" text-anchor=\"middle\" font-size=\"18\">#{piece.id}</text>\n"
+        end
+        
+        # Item na legenda
+        legend_y = padding + 52 + idx * 42
+        if legend_y < padding + height - 10
+          svg += "        <rect x=\"#{padding + width + 55}\" y=\"#{legend_y - 14}\" width=\"24\" height=\"24\" fill=\"#{color}\" stroke=\"#000\" stroke-width=\"1\"/>\n"
+          
+          piece_label = piece.label.length > 18 ? piece.label[0..15] + "..." : piece.label
+          rotation_mark = pp[:rotated] ? " ↻" : ""
+          
+          svg += "        <text x=\"#{padding + width + 86}\" y=\"#{legend_y}\" class=\"legend-text\">#{piece.id}: #{piece_label}#{rotation_mark}</text>\n"
+          svg += "        <text x=\"#{padding + width + 86}\" y=\"#{legend_y + 16}\" class=\"legend-text\" font-size=\"14\">#{piece.width}×#{piece.height}mm @ (#{pp[:x]}, #{pp[:y]})</text>\n"
+        end
+      end
+      
+      # Novo: Desenhar retângulos livres (chapa disponível)
+      snapshot[:free_rectangles].each do |rect|
+        rx = padding + rect[:x] * scale
+        ry = padding + rect[:y] * scale
+        rw = rect[:width] * scale
+        rh = rect[:height] * scale
+        
+        svg += "        <rect x=\"#{rx}\" y=\"#{ry}\" width=\"#{rw}\" height=\"#{rh}\" class=\"free-rect\"/>\n"
+      end
+      
+      svg += "      </svg>"
+      
+      svg
   end
 
   def generate_cut_lines(sheet, padding, scale)

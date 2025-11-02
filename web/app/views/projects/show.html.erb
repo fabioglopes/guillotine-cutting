@@ -300,9 +300,25 @@
     <!-- SVG Preview -->
     <div class="space-y-6">
       <h2 class="text-2xl font-semibold text-gray-900">🎨 Visualização dos Layouts</h2>
-      <% @result_files.select { |f| f.filename.to_s.end_with?('.svg') }.each do |svg_file| %>
+      
+      <!-- Seção Primária -->
+      <h3 class="text-xl font-medium text-gray-800 mt-6">Otimização Primária</h3>
+      <% primary_svgs = @result_files.select { |f| f.filename.to_s.start_with?('primary_') && f.filename.to_s.end_with?('.svg') } %>
+      <% primary_svgs.each do |svg_file| %>
         <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
-          <h3 class="text-lg font-medium text-gray-900 mb-4"><%= svg_file.filename %></h3>
+          <h4 class="text-lg font-medium text-gray-900 mb-4"><%= svg_file.filename %></h4>
+          <div class="border border-gray-300 rounded-lg p-4 bg-gray-50 overflow-auto">
+            <%= svg_file.download.force_encoding('UTF-8').html_safe %>
+          </div>
+        </div>
+      <% end %>
+      
+      <!-- Seção Alternativa -->
+      <h3 class="text-xl font-medium text-gray-800 mt-6">Otimização Alternativa</h3>
+      <% alt_svgs = @result_files.select { |f| f.filename.to_s.start_with?('alt_') && f.filename.to_s.end_with?('.svg') } %>
+      <% alt_svgs.each do |svg_file| %>
+        <div class="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+          <h4 class="text-lg font-medium text-gray-900 mb-4"><%= svg_file.filename %></h4>
           <div class="border border-gray-300 rounded-lg p-4 bg-gray-50 overflow-auto">
             <%= svg_file.download.force_encoding('UTF-8').html_safe %>
           </div>

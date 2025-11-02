@@ -138,6 +138,7 @@ class ProjectsController < ApplicationController
       :cutting_width,
       :thickness,
       :use_inventory,
+      :optimization_algorithm,
       :input_file,
       sheets_attributes: [:id, :label, :width, :height, :thickness, :quantity, :_destroy],
       pieces_attributes: [:id, :label, :width, :height, :thickness, :quantity, :_destroy]

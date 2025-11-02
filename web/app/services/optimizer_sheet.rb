@@ -1,6 +1,6 @@
 # Representa uma chapa disponível para corte
 class OptimizerSheet
-  attr_accessor :id, :width, :height, :label, :free_rectangles, :cutting_width
+  attr_accessor :id, :width, :height, :label, :free_rectangles, :cutting_width, :snapshots
   attr_reader :placed_pieces
 
   def initialize(id, width, height, label = nil)
@@ -11,6 +11,7 @@ class OptimizerSheet
     @placed_pieces = []
     @free_rectangles = []
     @cutting_width = 3
+    @snapshots = []  # Novo: inicializar snapshots
   end
 
   def area

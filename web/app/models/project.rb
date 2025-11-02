@@ -14,6 +14,7 @@ class Project < ApplicationRecord
   validates :cutting_width, numericality: { greater_than: 0 }, allow_nil: true
   validates :thickness, numericality: { greater_than: 0 }, allow_nil: true
   validates :status, inclusion: { in: %w[draft pending processing completed error] }, allow_nil: true
+  validates :optimization_algorithm, inclusion: { in: %w[two_stage_guillotine raster_point_dp cutting_optimizer] }, allow_nil: true
   validate :thickness_required_for_inventory, if: :use_inventory?
 
   before_validation :set_defaults, on: :create
@@ -85,6 +86,7 @@ class Project < ApplicationRecord
     self.allow_rotation = true if allow_rotation.nil?
     self.cutting_width ||= 3
     self.status ||= 'draft'
+    self.optimization_algorithm ||= 'two_stage_guillotine'
   end
 
   def thickness_required_for_inventory
